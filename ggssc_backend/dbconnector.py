@@ -13,14 +13,12 @@ class MongoMobileApp:
             self.__mongoConfig = settings.MONGOMOBILEAPP 
             #client = pymongo.MongoClient("mongodb://ranDBAdmin:testserver81@172.25.220.81/ranDB?authSource=admin")
             if self.__mongoConfig['authentication'] == 'True' or self.__mongoConfig['authentication'] == 'true' or self.__mongoConfig['authentication'] == True:
-                baseString = "mongodb://"+ self.__mongoConfig['username']+ ":"+ self.__mongoConfig['password']+"@"+ self.__mongoConfig['host']+":"+ str(self.__mongoConfig['port'])+"/"+ self.__mongoConfig['dbname']+"?authSource=admin&tls=true"
-                tlsString = "&tls=true&tlsCertificateKeyFile=" + self.__mongoConfig['mongoCertificatePath'] + "&tlsCAFile=" +self.__mongoConfig['mongoCAPath'] + "&tlsInsecure=true"
-                connectionString = baseString if self.__mongoConfig['tls'] == 'False' else baseString + tlsString
+                baseString = "mongodb+srv://"+ self.__mongoConfig['username']+ ":"+ self.__mongoConfig['password']+"@cluster0.tbkwx.mongodb.net/test"
+                connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             else:
                 baseString = "mongodb://"+ self.__mongoConfig['host']+":"+ str(self.__mongoConfig['port'])+"/"+ self.__mongoConfig['dbname']+"?authSource=admin&tls=true"
-                tlsString = "&tls=true&tlsCertificateKeyFile=" + self.__mongoConfig['mongoCertificatePath'] + "&tlsCAFile=" +self.__mongoConfig['mongoCAPath'] + "&tlsInsecure=true"
-                connectionString = baseString if self.__mongoConfig['tls'] == 'False' else baseString + tlsString
+                connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             self.__instance = client[self.__mongoConfig['dbname']] 
             self.__collections = self.__instance.list_collection_names();  
@@ -30,14 +28,12 @@ class MongoMobileApp:
         if MongoMobileApp.__instance == None:
             MongoMobileApp.__mongoConfig = settings.MONGOMOBILEAPP
             if MongoMobileApp.__mongoConfig['authentication'] == True or MongoMobileApp.__mongoConfig['authentication'] == 'True' or MongoMobileApp.__mongoConfig['authentication'] == 'true':
-                baseString = "mongodb://"+ MongoMobileApp.__mongoConfig['username']+ ":"+ MongoMobileApp.__mongoConfig['password']+"@"+ MongoMobileApp.__mongoConfig['host']+":"+ str(MongoMobileApp.__mongoConfig['port'])+"/"+ MongoMobileApp.__mongoConfig['dbname'] + "?authSource=admin"
-                tlsString = "&tls=true&tlsCertificateKeyFile=" + MongoMobileApp.__mongoConfig['mongoCertificatePath'] + "&tlsCAFile=" +MongoMobileApp.__mongoConfig['mongoCAPath'] + "&tlsInsecure=true"
-                connectionString = baseString if MongoMobileApp.__mongoConfig['tls'] == "False" else baseString + tlsString
+                baseString = "mongodb+srv://"+ MongoMobileApp.__mongoConfig['username']+ ":"+ MongoMobileApp.__mongoConfig['password']+"@cluster0.tbkwx.mongodb.net/test"
+                connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             else:
                 baseString = "mongodb://"+ MongoMobileApp.__mongoConfig['host']+":"+ str(MongoMobileApp.__mongoConfig['port'])+"/"+ MongoMobileApp.__mongoConfig['dbname']+"?authSource=admin"
-                tlsString = "&tls=true&tlsCertificateKeyFile=" + MongoMobileApp.__mongoConfig['mongoCertificatePath'] + "&tlsCAFile=" +MongoMobileApp.__mongoConfig['mongoCAPath'] + "&tlsInsecure=true"
-                connectionString = baseString if MongoMobileApp.__mongoConfig['tls'] == 'False' else baseString + tlsString
+                connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             MongoMobileApp.__instance = client[MongoMobileApp.__mongoConfig['dbname']]
             MongoMobileApp.__collections = MongoMobileApp.__instance.list_collection_names()
@@ -46,10 +42,21 @@ class MongoMobileApp:
         MongoMobileApp.getInstance()
         return MongoMobileApp.__collections
     def createCollection(collectionName, schema={}):
+        db = MongoMobileApp.getInstance()
         try:
-            MongoMobileApp.createCollection(collectionName, schema)
-            return True
-        except:
+            if collectionName not in db.list_collection_names():  # Check if collection exists
+                # Create collection with validation schema if provided
+                if schema:
+                    db.create_collection(collectionName, validator=schema)
+                else:
+                    db.create_collection(collectionName)  # Create without schema validation
+                print(f"Collection '{collectionName}' created successfully.")
+                return True
+            else:
+                print(f"Collection '{collectionName}' already exists.")
+                return False
+        except pymongo.errors.PyMongoError as e:
+            print(f"Error creating collection: {e}")
             return False
     def findOne(collection):
         db = MongoMobileApp.getInstance()
@@ -78,15 +85,16 @@ class MongoMobileApp:
                 data.append(record)            
         return data
     def createOne(collection, data):
+        print("here")
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
         if type(data) == list:
             for item in data:
                 if type(item) == dict:
-                    result = dbcollection.insert_one(MongoMobileApp.sanitizeDBQuery(item))
+                    result = dbcollection.insert_one(item)
                     return result.inserted_id
         elif type(data) == dict:
-            result = dbcollection.insert_one(MongoMobileApp.sanitizeDBQuery(data))
+            result = dbcollection.insert_one(data)
             return result.inserted_id
         else:
             return None

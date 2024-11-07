@@ -19,5 +19,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('/apps/api/v1/form/', include('ggssc_backend.formUrls')),
+    path('apps/api/v1/form/', include('ggssc_backend.formUrls')),
 ]

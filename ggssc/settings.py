@@ -79,18 +79,18 @@ WSGI_APPLICATION = 'ggssc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 MONGOMOBILEAPP = {
-    'host': "localhost",
+    'host': "cluster0",
     'port': "27017",
-    'dbname': "ggssc",
-    'authentication': "false",
+    'dbname': "ggsscca",
+    'authentication': "true",
     'username': "backend",
     'password': "1234",
 }
