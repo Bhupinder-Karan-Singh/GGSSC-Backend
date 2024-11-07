@@ -85,7 +85,6 @@ class MongoMobileApp:
                 data.append(record)            
         return data
     def createOne(collection, data):
-        print("here")
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
         if type(data) == list:
