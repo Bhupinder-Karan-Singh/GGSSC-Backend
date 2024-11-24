@@ -30,6 +30,10 @@ class formModel:
             result['images'] = params['images']
         else:
             result['images'] = ""
+        if 'status' in params:
+            result['status'] = "active"
+        else:
+            result['status'] = "inActive"
         return result
 
     def fromdb(params):
@@ -47,13 +51,28 @@ class formModel:
         else:
             result['eventDescription'] = ""
         if 'images' in params:
-            result['images'] = params['images']
+            result['images'] = params['images']['coverPhoto'][0]['img']
         else:
             result['images'] = ""
+        if 'status' in params:
+            result['status'] = params['status']
+        else:
+            result['status'] = "inActive"
         return result
 
+@api_view(['GET'])
+def getEvents(request):
+    filter = {}
+    filter['status'] = "active"
+    records = MongoMobileApp.find('events', filter)
+    i = 0
+    while i<len(records):
+        records[i] = formModel.fromdb(records[i])
+        i = i+1
+    return Response(records)
+
 @api_view(['POST'])
-def createForm(request):
+def createEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)

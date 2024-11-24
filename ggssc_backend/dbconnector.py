@@ -76,12 +76,10 @@ class MongoMobileApp:
         dbcollection = db[collection]
         data = []
         if query == None:
-            sanitized = MongoMobileApp.sanitizeDBQuery("")
-            for record in dbcollection.find(sanitized):
+            for record in dbcollection.find(""):
                 data.append(record)
         else:
-            sanitized = MongoMobileApp.sanitizeDBQuery(query)
-            for record in dbcollection.find(sanitized):
+            for record in dbcollection.find(query):
                 data.append(record)            
         return data
     def createOne(collection, data):
