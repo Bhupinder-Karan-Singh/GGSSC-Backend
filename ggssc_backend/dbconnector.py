@@ -61,14 +61,12 @@ class MongoMobileApp:
     def findOne(collection):
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
-        sanitized = MongoMobileApp.sanitizeDBQuery("")
-        return dbcollection.find_one(sanitized)
+        return dbcollection.find_one("")
     def findAll(collection):
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
         data = []
-        sanitized = MongoMobileApp.sanitizeDBQuery("")
-        for record in dbcollection.find(sanitized):
+        for record in dbcollection.find(""):
             data.append(record)
         return data
     def find(collection, query = None):
@@ -119,9 +117,3 @@ class MongoMobileApp:
     def listCollections():
         db = MongoMobileApp.getInstance()
         return db.list_collection_names()
-    def sanitizeDBQuery(data):
-        for key in data:
-            if type(data[key]) == str:
-                sanitizedVal = clean(data[key])
-                data[key] = sanitizedVal
-        return data
