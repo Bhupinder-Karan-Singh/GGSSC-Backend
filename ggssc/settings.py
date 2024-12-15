@@ -87,11 +87,11 @@ WSGI_APPLICATION = 'ggssc.wsgi.application'
 # }
 
 MONGOMOBILEAPP = {
-    # 'host': "cluster0",
-    'host': "localhost",
+    'host': "cluster0",
+    # 'host': "localhost",
     'port': "27017",
     'dbname': "ggsscca",
-    'authentication': "false",
+    'authentication': "true",
     'username': "backend",
     'password': "1234",
 }
