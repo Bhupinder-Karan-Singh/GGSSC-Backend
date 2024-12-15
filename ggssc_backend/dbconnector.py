@@ -98,22 +98,23 @@ class MongoMobileApp:
     def updateOne(collection, query, newvalues):
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
-        result = dbcollection.update_one(MongoMobileApp.sanitizeDBQuery(query), MongoMobileApp.sanitizeDBQuery(newvalues))
+        result = dbcollection.update_one(query, newvalues)
         return result.modified_count
     def updateMany(collection, query, newvalues):
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
-        result = dbcollection.update_many(MongoMobileApp.sanitizeDBQuery(query), MongoMobileApp.sanitizeDBQuery(newvalues))
+        result = dbcollection.update_many(query, newvalues)
         return result.modified_count
     def deleteOne(collection, query):
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
-        result = dbcollection.delete_one(MongoMobileApp.sanitizeDBQuery(query))
+        result = dbcollection.delete_one(query)
         return result.deleted_count
     def deleteMany(collection, query):
+        print(collection)
         db = MongoMobileApp.getInstance()
         dbcollection = db[collection]
-        result = dbcollection.delete_many(MongoMobileApp.sanitizeDBQuery(query))
+        result = dbcollection.delete_many(query)
         return result.deleted_count
     def listCollections():
         db = MongoMobileApp.getInstance()
