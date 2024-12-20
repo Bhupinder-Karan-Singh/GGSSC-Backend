@@ -57,7 +57,7 @@ class formModel:
             result['eventDescription'] = ""
         if 'images' in params:
             if 'coverPhoto' in params['images']:
-                result['images'] = params['images']['coverPhoto'][0]['img']
+                result['images'] = params['images']['coverPhoto'][0]['imageFile']['img']
         else:
             result['images'] = ""
         if 'status' in params:
@@ -154,7 +154,7 @@ def saveEvent(request):
     filter['_id'] = body['_id']
     records = MongoMobileApp.updateMany('events',filter,{'$set':body})
     records = formModel.fromdb(body)
-    return Response("records")
+    return Response(records)
 
 @api_view(['DELETE'])
 def deleteEvent(request):

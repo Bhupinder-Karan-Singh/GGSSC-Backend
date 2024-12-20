@@ -25,6 +25,8 @@ SECRET_KEY = 'django-insecure-h(5!@@t*ci#(t$f1ad0q+$*_nm6#f)j3!3=24ege#kug0@=or@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin')
