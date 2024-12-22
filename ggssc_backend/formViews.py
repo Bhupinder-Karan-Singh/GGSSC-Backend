@@ -43,6 +43,18 @@ class formModel:
             result['location'] = params['location']
         else:
             result['location'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -79,6 +91,18 @@ class formModel:
             result['location'] = params['location']
         else:
             result['location'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
         if 'images' in params:
             if 'coverPhoto' in params['images']:
                 result['images'] = params['images']['coverPhoto'][0]['imageFile']['img']
@@ -113,6 +137,18 @@ class payloadModel:
             result['location'] = params['location']
         else:
             result['location'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -149,6 +185,18 @@ class payloadModel:
             result['location'] = params['location']
         else:
             result['location'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
