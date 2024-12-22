@@ -31,14 +31,26 @@ class formModel:
             result['eventDescription'] = params['eventDescription']
         else:
             result['eventDescription'] = ""
+        if 'startTime' in params:
+            result['startTime'] = params['startTime']
+        else:
+            result['startTime'] = ""
+        if 'endTime' in params:
+            result['endTime'] = params['endTime']
+        else:
+            result['endTime'] = ""
+        if 'location' in params:
+            result['location'] = params['location']
+        else:
+            result['location'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
             result['images'] = ""
         if 'status' in params:
-            result['status'] = "active"
+            result['status'] = params['status']
         else:
-            result['status'] = "inActive"
+            result['status'] = ""
         return result
 
     def fromdb(params):
@@ -55,6 +67,18 @@ class formModel:
             result['eventDescription'] = params['eventDescription']
         else:
             result['eventDescription'] = ""
+        if 'startTime' in params:
+            result['startTime'] = params['startTime']
+        else:
+            result['startTime'] = ""
+        if 'endTime' in params:
+            result['endTime'] = params['endTime']
+        else:
+            result['endTime'] = ""
+        if 'location' in params:
+            result['location'] = params['location']
+        else:
+            result['location'] = ""
         if 'images' in params:
             if 'coverPhoto' in params['images']:
                 result['images'] = params['images']['coverPhoto'][0]['imageFile']['img']
@@ -63,7 +87,7 @@ class formModel:
         if 'status' in params:
             result['status'] = params['status']
         else:
-            result['status'] = "inActive"
+            result['status'] = ""
         return result
 
 class payloadModel:
@@ -77,14 +101,26 @@ class payloadModel:
             result['eventDescription'] = params['eventDescription']
         else:
             result['eventDescription'] = ""
+        if 'startTime' in params:
+            result['startTime'] = params['startTime']
+        else:
+            result['startTime'] = ""
+        if 'endTime' in params:
+            result['endTime'] = params['endTime']
+        else:
+            result['endTime'] = ""
+        if 'location' in params:
+            result['location'] = params['location']
+        else:
+            result['location'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
             result['images'] = ""
         if 'status' in params:
-            result['status'] = "active"
+            result['status'] = params['status']
         else:
-            result['status'] = "inActive"
+            result['status'] = ""
         return result
 
     def fromdb(params):
@@ -101,6 +137,18 @@ class payloadModel:
             result['eventDescription'] = params['eventDescription']
         else:
             result['eventDescription'] = ""
+        if 'startTime' in params:
+            result['startTime'] = params['startTime']
+        else:
+            result['startTime'] = ""
+        if 'endTime' in params:
+            result['endTime'] = params['endTime']
+        else:
+            result['endTime'] = ""
+        if 'location' in params:
+            result['location'] = params['location']
+        else:
+            result['location'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -108,14 +156,24 @@ class payloadModel:
         if 'status' in params:
             result['status'] = params['status']
         else:
-            result['status'] = "inActive"
+            result['status'] = ""
         return result
 
 @api_view(['GET'])
 def getEvents(request):
     filter = {}
-    filter['status'] = "active"
+    filter['status'] = "Active"
     records = MongoMobileApp.find('events', filter)
+    i = 0
+    while i<len(records):
+        records[i] = formModel.fromdb(records[i])
+        i = i+1
+    return Response(records)
+
+@api_view(['GET'])
+def getAllEvents(request):
+    filter = {}
+    records = MongoMobileApp.find('events', {})
     i = 0
     while i<len(records):
         records[i] = formModel.fromdb(records[i])

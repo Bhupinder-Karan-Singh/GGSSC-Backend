@@ -8,6 +8,7 @@ urlpatterns = [
     path('createEvent', formViews.createEvent),
     path('deleteEvent', formViews.deleteEvent),
     path('getEvents', formViews.getEvents),
+    path('getAllEvents', formViews.getAllEvents),
     path('getEvent', formViews.getEvent),
     path('saveEvent', formViews.saveEvent),
 ]
