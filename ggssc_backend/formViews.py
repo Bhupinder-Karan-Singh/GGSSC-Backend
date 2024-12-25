@@ -8,6 +8,10 @@ from rest_framework.response import Response
 from bson import ObjectId
 from bson.objectid import ObjectId
 
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 def systemCheck():
     collections = MongoMobileApp.listCollections()
     if 'events' not in collections:
@@ -246,9 +250,9 @@ def createEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
-    records = MongoMobileApp.createOne('events',body)
-    records = formModel.fromdb(body)
-    return Response(records)
+    MongoMobileApp.createOne('events',body)
+    body = formModel.fromdb(body)
+    return Response(body)
 
 @api_view(['POST'])
 def saveEvent(request):
@@ -258,9 +262,33 @@ def saveEvent(request):
     print(body['_id'])
     filter = {}
     filter['_id'] = body['_id']
-    records = MongoMobileApp.updateMany('events',filter,{'$set':body})
-    records = formModel.fromdb(body)
-    return Response(records)
+    MongoMobileApp.updateMany('events',filter,{'$set':body})
+    body = formModel.fromdb(body)
+
+    # sendgrid_api_key = "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"
+    # sender_email = "karansingh1455@gmail.com"
+    # recipient_email = "bhupinderkaransingh@gmail.com"
+    # subject = "Test Email via SendGrid"
+    # emailBody = "This email was sent using SendGrid and Python!"
+
+    # try:
+    #     # Create the email content
+    #     message = Mail(
+    #         from_email=sender_email,
+    #         to_emails=recipient_email,
+    #         subject=subject,
+    #         plain_text_content=emailBody
+    #     )
+    #     # Initialize the SendGrid client
+    #     sg = SendGridAPIClient(sendgrid_api_key)
+    #     response = sg.client.api_keys.get()
+    #     # Send the email
+    #     response = sg.send(message)
+    #     print(f"Email sent successfully! Status code: {response.status_code}")
+    # except Exception as e:
+    #     print(f"Failed to send email: {e}")
+    
+    return Response(body)
 
 @api_view(['DELETE'])
 def deleteEvent(request):
