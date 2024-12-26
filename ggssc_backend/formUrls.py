@@ -11,4 +11,5 @@ urlpatterns = [
     path('getAllEvents', formViews.getAllEvents),
     path('getEvent', formViews.getEvent),
     path('saveEvent', formViews.saveEvent),
+    path('registerEvent', formViews.registerEvent),
 ]

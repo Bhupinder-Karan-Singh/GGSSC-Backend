@@ -211,6 +211,83 @@ class payloadModel:
             result['status'] = ""
         return result
 
+class registerModel:
+    def todb(params):
+        result = {}
+        if 'name' in params:
+            result['name'] = params['name']
+        else:
+            result['name'] = ""
+        if 'dateOfBirth' in params:
+            result['dateOfBirth'] = params['dateOfBirth']
+        else:
+            result['dateOfBirth'] = ""
+        if 'fatherName' in params:
+            result['fatherName'] = params['fatherName']
+        else:
+            result['fatherName'] = ""
+        if 'motherName' in params:
+            result['motherName'] = params['motherName']
+        else:
+            result['motherName'] = ""
+        if 'email' in params:
+            result['email'] = params['email']
+        else:
+            result['email'] = ""
+        if 'phoneNumber' in params:
+            result['phoneNumber'] = params['phoneNumber']
+        else:
+            result['phoneNumber'] = ""
+        if 'images' in params:
+            result['images'] = params['images']
+        else:
+            result['images'] = ""
+        if 'eventId' in params:
+            result['eventId'] = params['eventId']
+        else:
+            result['eventId'] = ""
+        return result
+
+    def fromdb(params):
+        result = {}
+        if '_id' in params:
+            result['_id'] = str(params['_id'])
+        else:
+            result['_id'] = ''
+        if 'name' in params:
+            result['name'] = params['name']
+        else:
+            result['name'] = ""
+        if 'dob' in params:
+            result['dob'] = params['dob']
+        else:
+            result['dob'] = ""
+        if 'fatherName' in params:
+            result['fatherName'] = params['fatherName']
+        else:
+            result['fatherName'] = ""
+        if 'motherName' in params:
+            result['motherName'] = params['motherName']
+        else:
+            result['motherName'] = ""
+        if 'email' in params:
+            result['email'] = params['email']
+        else:
+            result['email'] = ""
+        if 'phoneNumber' in params:
+            result['phoneNumber'] = params['phoneNumber']
+        else:
+            result['phoneNumber'] = ""
+        if 'images' in params:
+            result['images'] = params['images']
+        else:
+            result['images'] = ""
+        if 'eventId' in params:
+            result['eventId'] = params['eventId']
+        else:
+            result['eventId'] = ""
+        return result
+
 @api_view(['GET'])
 def getEvents(request):
     filter = {}
@@ -264,6 +341,15 @@ def saveEvent(request):
     filter['_id'] = body['_id']
     MongoMobileApp.updateMany('events',filter,{'$set':body})
     body = formModel.fromdb(body)
+    return Response(body)
+
+@api_view(['POST'])
+def registerEvent(request):
+    systemCheck()
+    body = json.loads(request.body.decode('utf-8'))
+    body = registerModel.todb(body)
+    MongoMobileApp.createOne('participants',body)
+    body = registerModel.fromdb(body)
 
     # sendgrid_api_key = "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"
     # sender_email = "karansingh1455@gmail.com"
