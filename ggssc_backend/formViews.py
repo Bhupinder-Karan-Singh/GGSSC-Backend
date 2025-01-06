@@ -246,6 +246,7 @@ class registerModel:
             result['eventId'] = params['eventId']
         else:
             result['eventId'] = ""
+        result['events'] = []
         return result
 
     def fromdb(params):
@@ -286,6 +287,10 @@ class registerModel:
             result['eventId'] = params['eventId']
         else:
             result['eventId'] = ""
+        if 'events' in params:
+            result['events'] = params['events']
+        else:
+            result['events'] = []
         return result
 
 @api_view(['GET'])
@@ -348,14 +353,198 @@ def registerEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
     body = registerModel.todb(body)
-    MongoMobileApp.createOne('participants',body)
-    body = registerModel.fromdb(body)
+
+    event_filter = {}
+    event_filter['_id'] = ObjectId(body['eventId'])
+    event = MongoMobileApp.find('events', event_filter)
+    if isinstance(event, list) and len(event)>0:
+        try:
+            if event[0]['status'] != "Active":
+                return Response("Event diabaled. Contact Administartor")
+            else:
+                pass
+        except Exception as error:
+            return Response("Internal Server Error")
+            
+
+    email_Filter = {}
+    email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
+    record = MongoMobileApp.find('participants', email_Filter)
+    if isinstance(record, list) and len(record)>0:
+        msg = "From email"
+        print(msg)
+        if body['eventId'] not in record[0]['events']:
+            record[0]['events'].append(body['eventId'])
+            setData = {}
+            setData['$set'] = {}
+            setData['$set']['events'] = record[0]['events']
+            MongoMobileApp.updateOne('participants', email_Filter, setData)
+            event_filter = {}
+            event_filter['_id'] = ObjectId(body['eventId'])
+            event = MongoMobileApp.find('events', event_filter)
+            if isinstance(event, list) and len(event)>0:
+                try:
+                    event[0]['participants'].append(str(record[0]['_id']))
+                    setData = {}
+                    setData['$set'] = {}
+                    setData['$set']['participants'] = event[0]['participants']
+                    MongoMobileApp.updateOne('events', event_filter, setData)
+                    return Response("Candidate already registered with email. Event successfully registered")
+                except Exception as error:
+                    if body['eventId'] in record[0]['events']:
+                        index = record[0]['events'].index(body['eventId'])
+                        record[0]['events'].pop(index)
+                        setData = {}
+                        setData['$set'] = {}
+                        setData['$set']['events'] = record[0]['events']
+                        MongoMobileApp.updateOne('participants', email_Filter, setData)
+                        return Response("Internal Server Error related to data upadte")
+                    else:
+                        print(f"Event ID {body['eventId']} not found in the list.")
+                        return Response("Internal Server Error : "+str(error))
+            else:
+                if body['eventId'] in record[0]['events']:
+                    index = record[0]['events'].index(body['eventId'])
+                    record[0]['events'].pop(index)
+                    setData = {}
+                    setData['$set'] = {}
+                    setData['$set']['events'] = record[0]['events']
+                    MongoMobileApp.updateOne('participants', email_Filter, setData)
+                    return Response("Internal Server Error related to data upadte")
+                else:
+                    print(f"Event ID {body['eventId']} not found in the list.")
+                    return Response("Internal Server Error : "+str(error))
+        else:
+            return Response("Candidate already registered with email. Event is already regeistered")
+    else:
+        pass
+
+    # phone_Filter = {}
+    # phone_Filter['phoneNumber'] = body['phoneNumber']
+    # record = MongoMobileApp.find('participants', phone_Filter)
+    # if isinstance(record, list) and len(record)>0:
+    #     msg = "From phone"
+    #     print(msg)
+    #     if body['eventId'] not in record[0]['events']:
+    #         record[0]['events'].append(body['eventId'])
+    #         setData = {}
+    #         setData['$set'] = {}
+    #         setData['$set']['events'] = record[0]['events']
+    #         MongoMobileApp.updateOne('participants', phone_Filter, setData)
+    #         event_filter = {}
+    #         event_filter['_id'] = ObjectId(body['eventId'])
+    #         event = MongoMobileApp.find('events', event_filter)
+    #         if isinstance(event, list) and len(event)>0:
+    #             try:
+    #                 event[0]['participants'].append(str(record[0]['_id']))
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['participants'] = event[0]['participants']
+    #                 MongoMobileApp.updateOne('events', event_filter, setData)
+    #                 return Response("Candidate already registered with phone. Event successfully registered")
+    #             except Exception as error:
+    #                 if body['eventId'] in record[0]['events']:
+    #                     index = record[0]['events'].index(body['eventId'])
+    #                     record[0]['events'].pop(index)
+    #                     setData = {}
+    #                     setData['$set'] = {}
+    #                     setData['$set']['events'] = record[0]['events']
+    #                     MongoMobileApp.updateOne('participants', phone_Filter, setData)
+    #                     return Response("Internal Server Error related to data upadte")
+    #                 else:
+    #                     print(f"Event ID {body['eventId']} not found in the list.")
+    #                     return Response("Internal Server Error : "+str(error))
+    #         else:
+    #             if body['eventId'] in record[0]['events']:
+    #                 index = record[0]['events'].index(body['eventId'])
+    #                 record[0]['events'].pop(index)
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['events'] = record[0]['events']
+    #                 MongoMobileApp.updateOne('participants', phone_Filter, setData)
+    #                 return Response("Internal Server Error related to data upadte")
+    #             else:
+    #                 print(f"Event ID {body['eventId']} not found in the list.")
+    #                 return Response("Internal Server Error : "+str(error))
+    #     else:
+    #         return Response("Candidate already registered with phone. Event is already regeistered")
+    # else:
+    #     pass
+
+    filter = {}
+    filter['name'] = {'$regex': f"^{body['name']}$", '$options': 'i'}
+    filter['dateOfBirth'] = body['dateOfBirth']
+    filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
+    filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
+    record = MongoMobileApp.find('participants', filter)
+    if isinstance(record, list) and len(record)>0:
+        msg = "From details"
+        print(msg)
+        if body['eventId'] not in record[0]['events']:
+            record[0]['events'].append(body['eventId'])
+            setData = {}
+            setData['$set'] = {}
+            setData['$set']['events'] = record[0]['events']
+            MongoMobileApp.updateOne('participants', filter, setData)
+            event_filter = {}
+            event_filter['_id'] = ObjectId(body['eventId'])
+            event = MongoMobileApp.find('events', event_filter)
+            if isinstance(event, list) and len(event)>0:
+                try:
+                    event[0]['participants'].append(str(record[0]['_id']))
+                    setData = {}
+                    setData['$set'] = {}
+                    setData['$set']['participants'] = event[0]['participants']
+                    MongoMobileApp.updateOne('events', event_filter, setData)
+                    return Response("Candidate already registered with details. Event successfully registered")
+                except Exception as error:
+                    if body['eventId'] in record[0]['events']:
+                        index = record[0]['events'].index(body['eventId'])
+                        record[0]['events'].pop(index)
+                        setData = {}
+                        setData['$set'] = {}
+                        setData['$set']['events'] = record[0]['events']
+                        MongoMobileApp.updateOne('participants', filter, setData)
+                        return Response("Internal Server Error related to data upadte")
+                    else:
+                        print(f"Event ID {body['eventId']} not found in the list.")
+                        return Response("Internal Server Error : "+str(error))
+            else:
+                if body['eventId'] in record[0]['events']:
+                    index = record[0]['events'].index(body['eventId'])
+                    record[0]['events'].pop(index)
+                    setData = {}
+                    setData['$set'] = {}
+                    setData['$set']['events'] = record[0]['events']
+                    MongoMobileApp.updateOne('participants', filter, setData)
+                    return Response("Internal Server Error related to data upadte")
+                else:
+                    print(f"Event ID {body['eventId']} not found in the list.")
+                    return Response("Internal Server Error : "+str(error))
+        else:
+            return Response("Candidate already registered with details. Event is already regeistered")
+    else:
+        print("new candidate")
+        body['events'].append(body['eventId'])
+        record = MongoMobileApp.createOne('participants', body)
+        event_filter = {}
+        event_filter['_id'] = ObjectId(body['eventId'])
+        event = MongoMobileApp.find('events', event_filter)
+        if isinstance(event, list) and len(event)>0:
+            event[0]['participants'].append(str(record))
+            setData = {}
+            setData['$set'] = {}
+            setData['$set']['participants'] = event[0]['participants']
+            MongoMobileApp.updateOne('events', event_filter, setData)
+            return Response("New Candidate Registered. Event successfully registered")
+        else:
+            return Response("Error Occurred")
 
     # sendgrid_api_key = "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"
     # sender_email = "karansingh1455@gmail.com"
     # recipient_email = "bhupinderkaransingh@gmail.com"
-    # subject = "Test Email via SendGrid"
-    # emailBody = "This email was sent using SendGrid and Python!"
+    # subject = "Event : "+body['eventId']
+    # emailBody = "Thank you for registering " + body['name']
 
     # try:
     #     # Create the email content
@@ -373,8 +562,6 @@ def registerEvent(request):
     #     print(f"Email sent successfully! Status code: {response.status_code}")
     # except Exception as e:
     #     print(f"Failed to send email: {e}")
-    
-    return Response(body)
 
 @api_view(['DELETE'])
 def deleteEvent(request):
@@ -391,3 +578,49 @@ def json_converter(o):
     if isinstance(o, ObjectId):
         return str(o)  # Convert ObjectId to string
     raise TypeError(f"Type {o} not serializable")
+
+# def register(body,record,msg):
+#     print(msg)
+#     if body['eventId'] not in record[0]['events']:
+#         record[0]['events'].append(body['eventId'])
+#         setData = {}
+#         setData['$set'] = {}
+#         setData['$set']['events'] = record[0]['events']
+#         MongoMobileApp.updateOne('participants', filter, setData)
+#         event_filter = {}
+#         event_filter['_id'] = ObjectId(body['eventId'])
+#         event = MongoMobileApp.find('events', event_filter)
+#         if isinstance(event, list) and len(event)>0:
+#             try:
+#                 event[0]['participants'].append(str(record[0]['_id']))
+#                 setData = {}
+#                 setData['$set'] = {}
+#                 setData['$set']['participants'] = event[0]['participants']
+#                 MongoMobileApp.updateOne('events', event_filter, setData)
+#                 return Response("Candidate already registered. Event successfully registered")
+#             except Exception as error:
+#                 if body['eventId'] in record[0]['events']:
+#                     index = record[0]['events'].index(body['eventId'])
+#                     record[0]['events'].pop(index)
+#                     setData = {}
+#                     setData['$set'] = {}
+#                     setData['$set']['events'] = record[0]['events']
+#                     MongoMobileApp.updateOne('participants', filter, setData)
+#                     return Response("Internal Server Error related to data upadte")
+#                 else:
+#                     print(f"Event ID {body['eventId']} not found in the list.")
+#                     return Response("Internal Server Error : "+str(error))
+#         else:
+#             if body['eventId'] in record[0]['events']:
+#                 index = record[0]['events'].index(body['eventId'])
+#                 record[0]['events'].pop(index)
+#                 setData = {}
+#                 setData['$set'] = {}
+#                 setData['$set']['events'] = record[0]['events']
+#                 MongoMobileApp.updateOne('participants', filter, setData)
+#                 return Response("Internal Server Error related to data upadte")
+#             else:
+#                 print(f"Event ID {body['eventId']} not found in the list.")
+#                 return Response("Internal Server Error : "+str(error))
+#     else:
+#         return Response("Candidate already registered. Event is already regeistered")
