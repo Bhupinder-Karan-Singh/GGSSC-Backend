@@ -12,4 +12,6 @@ urlpatterns = [
     path('getEvent', formViews.getEvent),
     path('saveEvent', formViews.saveEvent),
     path('registerEvent', formViews.registerEvent),
+    path('sendOtp',formViews.sendOtp),
+    path('verifyOtp',formViews.verifyOtp)
 ]

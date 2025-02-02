@@ -7,6 +7,7 @@ import json
 from rest_framework.response import Response
 from bson import ObjectId
 from bson.objectid import ObjectId
+import random
 
 import os
 from sendgrid import SendGridAPIClient
@@ -67,6 +68,10 @@ class formModel:
             result['status'] = params['status']
         else:
             result['status'] = ""
+        if 'participants' in params:
+            result['participants'] = params['participants']
+        else:
+            result['participants'] = []
         return result
 
     def fromdb(params):
@@ -116,6 +121,10 @@ class formModel:
             result['status'] = params['status']
         else:
             result['status'] = ""
+        if 'participants' in params:
+            result['participants'] = params['participants']
+        else:
+            result['participants'] = []
         return result
 
 class payloadModel:
@@ -349,6 +358,63 @@ def saveEvent(request):
     return Response(body)
 
 @api_view(['POST'])
+def sendOtp(request):
+    systemCheck()
+    body = json.loads(request.body.decode('utf-8'))
+
+    otp_filter = {}
+    otp_filter['email'] = body['email']
+    
+    random_number = random.randint(100000, 999999)
+
+    record = MongoMobileApp.find('otps', otp_filter)
+    if isinstance(record, list) and len(record)>0:
+        try:
+            record[0]['otps'].append(random_number)
+            setData = {}
+            setData['$set'] = {}
+            setData['$set']['otps'] = record[0]['otps']
+            MongoMobileApp.updateOne('otps', otp_filter, setData)
+            sendOtpEmail(random_number,body['email'])
+            return Response("Email already exists. Code sent to email : "+ str(body['email']))
+        except Exception as error:
+            return Response("Internal Server Error")
+    else:
+        try:
+            body['otps'] = []
+            body['otps'].append(random_number)
+            MongoMobileApp.createOne('otps',body)
+            sendOtpEmail(random_number,body['email'])
+            return Response("New Email saved. Code sent to email : "+ str(body['email']))
+        except Exception as error:
+            return Response("Internal Server Error")
+
+@api_view(['POST'])
+def verifyOtp(request):
+    systemCheck()
+    body = json.loads(request.body.decode('utf-8'))
+    
+    emailFilter = {}
+    emailFilter['email'] = body['email']
+
+    record = MongoMobileApp.find('otps', emailFilter)
+    if isinstance(record, list) and len(record)>0:
+        try:
+            otps = record[0]['otps']
+            latestCode = otps[-1]
+            if str(latestCode) == body['otp']:
+                return Response("Code Verification successfull")
+            else:
+                return Response("Invalid code entered")
+        except Exception as error:
+            return Response("Internal Server Error")
+    else:
+        try:
+            return Response("No such email " + body['email'] + " exists")
+        except Exception as error:
+            return Response("Internal Server Error")
+
+@api_view(['POST'])
 def registerEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
@@ -389,6 +455,7 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
+                    sendEmail(body)
                     return Response("Candidate already registered with email. Event successfully registered")
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
@@ -496,6 +563,7 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
+                    sendEmail(body)
                     return Response("Candidate already registered with details. Event successfully registered")
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
@@ -536,32 +604,10 @@ def registerEvent(request):
             setData['$set'] = {}
             setData['$set']['participants'] = event[0]['participants']
             MongoMobileApp.updateOne('events', event_filter, setData)
+            sendEmail(body)
             return Response("New Candidate Registered. Event successfully registered")
         else:
             return Response("Error Occurred")
-
-    # sendgrid_api_key = "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"
-    # sender_email = "karansingh1455@gmail.com"
-    # recipient_email = "bhupinderkaransingh@gmail.com"
-    # subject = "Event : "+body['eventId']
-    # emailBody = "Thank you for registering " + body['name']
-
-    # try:
-    #     # Create the email content
-    #     message = Mail(
-    #         from_email=sender_email,
-    #         to_emails=recipient_email,
-    #         subject=subject,
-    #         plain_text_content=emailBody
-    #     )
-    #     # Initialize the SendGrid client
-    #     sg = SendGridAPIClient(sendgrid_api_key)
-    #     response = sg.client.api_keys.get()
-    #     # Send the email
-    #     response = sg.send(message)
-    #     print(f"Email sent successfully! Status code: {response.status_code}")
-    # except Exception as e:
-    #     print(f"Failed to send email: {e}")
 
 @api_view(['DELETE'])
 def deleteEvent(request):
@@ -624,3 +670,51 @@ def json_converter(o):
 #                 return Response("Internal Server Error : "+str(error))
 #     else:
 #         return Response("Candidate already registered. Event is already regeistered")
+
+def sendEmail(body):
+    sendgrid_api_key = "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"
+    sender_email = "karansingh1455@gmail.com"
+    recipient_email = "bhupinderkaransingh@gmail.com"
+    subject = "Event : "+body['eventId']
+    emailBody = "Thank you for registering " + body['name']
+
+    try:
+        # Create the email content
+        message = Mail(
+            from_email=sender_email,
+            to_emails=recipient_email,
+            subject=subject,
+            plain_text_content=emailBody
+        )
+        # Initialize the SendGrid client
+        sg = SendGridAPIClient(sendgrid_api_key)
+        response = sg.client.api_keys.get()
+        # Send the email
+        response = sg.send(message)
+        print(f"Email sent successfully! Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+def sendOtpEmail(random_number,email):
+    sendgrid_api_key = "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"
+    sender_email = "karansingh1455@gmail.com"
+    recipient_email = email
+    subject = "GGSSC verification code"
+    emailBody = "Registration Verification code is " + str(random_number)
+
+    try:
+        # Create the email content
+        message = Mail(
+            from_email=sender_email,
+            to_emails=recipient_email,
+            subject=subject,
+            plain_text_content=emailBody
+        )
+        # Initialize the SendGrid client
+        sg = SendGridAPIClient(sendgrid_api_key)
+        response = sg.client.api_keys.get()
+        # Send the email
+        response = sg.send(message)
+        print(f"Email sent successfully! Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
