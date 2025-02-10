@@ -13,5 +13,6 @@ urlpatterns = [
     path('saveEvent', formViews.saveEvent),
     path('registerEvent', formViews.registerEvent),
     path('sendOtp',formViews.sendOtp),
-    path('verifyOtp',formViews.verifyOtp)
+    path('verifyOtp',formViews.verifyOtp),
+    path('getAllCandidates',formViews.getAllCandidates)
 ]

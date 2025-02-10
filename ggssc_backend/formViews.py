@@ -319,6 +319,48 @@ class registerModel:
             result['events'] = []
         return result
 
+class candidateModel:
+    def fromdb(params):
+        result = {}
+        if '_id' in params:
+            result['_id'] = str(params['_id'])
+        else:
+            result['_id'] = ''
+        if 'name' in params:
+            result['name'] = params['name']
+        else:
+            result['name'] = ""
+        if 'dateOfBirth' in params:
+            result['dateOfBirth'] = params['dateOfBirth']
+        else:
+            result['dateOfBirth'] = ""
+        if 'fatherName' in params:
+            result['fatherName'] = params['fatherName']
+        else:
+            result['fatherName'] = ""
+        if 'motherName' in params:
+            result['motherName'] = params['motherName']
+        else:
+            result['motherName'] = ""
+        if 'email' in params:
+            result['email'] = params['email']
+        else:
+            result['email'] = ""
+        if 'phoneNumber' in params:
+            result['phoneNumber'] = params['phoneNumber']
+        else:
+            result['phoneNumber'] = ""
+        if 'rollNumber' in params:
+            result['rollNumber'] = params['rollNumber']
+        else:
+            result['rollNumber'] = ""
+        if 'images' in params:
+            if 'profilePhoto' in params['images']:
+                result['images'] = params['images']['profilePhoto'][0]['imageFile']['img']
+        else:
+            result['images'] = ""
+        return result
+
 @api_view(['GET'])
 def getEvents(request):
     filter = {}
@@ -352,6 +394,16 @@ def getEvent(request):
         record[i] = payloadModel.fromdb(record[i])
         i = i+1
     return Response(record)
+
+@api_view(['GET'])
+def getAllCandidates(request):
+    filter = {}
+    records = MongoMobileApp.find('participants', {})
+    i = 0
+    while i<len(records):
+        records[i] = candidateModel.fromdb(records[i])
+        i = i+1
+    return Response(records)
 
 @api_view(['POST'])
 def createEvent(request):
