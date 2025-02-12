@@ -8,7 +8,9 @@ from rest_framework.response import Response
 from bson import ObjectId
 from bson.objectid import ObjectId
 import random
+from django.http import HttpResponse, FileResponse, Http404, JsonResponse
 from datetime import datetime
+from rest_framework import status
 
 import os
 from sendgrid import SendGridAPIClient
@@ -171,6 +173,10 @@ class payloadModel:
             result['status'] = params['status']
         else:
             result['status'] = ""
+        if 'participants' in params:
+            result['participants'] = params['participants']
+        else:
+            result['participants'] = []
         return result
 
     def fromdb(params):
@@ -219,6 +225,10 @@ class payloadModel:
             result['status'] = params['status']
         else:
             result['status'] = ""
+        if 'participants' in params:
+            result['participants'] = params['participants']
+        else:
+            result['participants'] = []
         return result
 
 class registerModel:
@@ -264,6 +274,18 @@ class registerModel:
             result['location'] = params['location']
         else:
             result['location'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'isEdited' in params:
+            result['isEdited'] = params['isEdited']
+        else:
+            result['isEdited'] = ""
         result['events'] = []
         return result
 
@@ -355,10 +377,87 @@ class candidateModel:
         else:
             result['rollNumber'] = ""
         if 'images' in params:
-            if 'profilePhoto' in params['images']:
-                result['images'] = params['images']['profilePhoto'][0]['imageFile']['img']
+            result['images'] = params['images']
         else:
             result['images'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
+        if 'updatedOn' in params:
+            result['updatedOn'] = params['updatedOn']
+        else:
+            result['updatedOn'] = ""
+        if 'isEdited' in params:
+            result['isEdited'] = params['isEdited']
+        else:
+            result['isEdited'] = ""
+        return result
+
+    def todb(params):
+        result = {}
+        if '_id' in params:
+            result['_id'] = ObjectId(params['_id'])
+        if 'name' in params:
+            result['name'] = params['name']
+        else:
+            result['name'] = ""
+        if 'dateOfBirth' in params:
+            result['dateOfBirth'] = params['dateOfBirth']
+        else:
+            result['dateOfBirth'] = ""
+        if 'fatherName' in params:
+            result['fatherName'] = params['fatherName']
+        else:
+            result['fatherName'] = ""
+        if 'motherName' in params:
+            result['motherName'] = params['motherName']
+        else:
+            result['motherName'] = ""
+        if 'email' in params:
+            result['email'] = params['email']
+        else:
+            result['email'] = ""
+        if 'phoneNumber' in params:
+            result['phoneNumber'] = params['phoneNumber']
+        else:
+            result['phoneNumber'] = ""
+        if 'rollNumber' in params:
+            result['rollNumber'] = params['rollNumber']
+        else:
+            result['rollNumber'] = ""
+        if 'images' in params:
+            result['images'] = params['images']
+        else:
+            result['images'] = ""
+        if 'createdBy' in params:
+            result['createdBy'] = params['createdBy']
+        else:
+            result['createdBy'] = ""
+        if 'createdOn' in params:
+            result['createdOn'] = params['createdOn']
+        else:
+            result['createdOn'] = ""
+        if 'updatedBy' in params:
+            result['updatedBy'] = params['updatedBy']
+        else:
+            result['updatedBy'] = ""
+        if 'updatedOn' in params:
+            result['updatedOn'] = params['updatedOn']
+        else:
+            result['updatedOn'] = ""
+        if 'isEdited' in params:
+            result['isEdited'] = params['isEdited']
+        else:
+            result['isEdited'] = ""
         return result
 
 @api_view(['GET'])
@@ -396,6 +495,27 @@ def getEvent(request):
     return Response(record)
 
 @api_view(['GET'])
+def getCandidatesList(request):
+    params = request.query_params
+    filter = {}
+    if 'payloadId' in params:
+        filter['_id'] = ObjectId(params['payloadId'])
+    record = MongoMobileApp.find('events', filter)
+    if isinstance(record, list) and len(record)>0:
+        if 'participants' in record[0] and len(record[0]['participants'])>0:
+            participants = []
+            for participant in record[0]['participants']:
+                print(participant)
+                filter2 = {}
+                filter2['_id'] = ObjectId(participant)
+                result = MongoMobileApp.find('participants', filter2)
+                result = candidateModel.fromdb(result[0])
+                participants.append(result)
+            return Response(participants)
+        else:
+            return Response([])
+
+@api_view(['GET'])
 def getAllCandidates(request):
     filter = {}
     records = MongoMobileApp.find('participants', {})
@@ -424,6 +544,18 @@ def saveEvent(request):
     filter['_id'] = body['_id']
     MongoMobileApp.updateMany('events',filter,{'$set':body})
     body = formModel.fromdb(body)
+    return Response(body)
+
+@api_view(['POST'])
+def saveCandidate(request):
+    systemCheck()
+    body = json.loads(request.body.decode('utf-8'))
+    body = candidateModel.todb(body)
+    print(body['_id'])
+    filter = {}
+    filter['_id'] = body['_id']
+    MongoMobileApp.updateMany('participants',filter,{'$set':body})
+    body = candidateModel.fromdb(body)
     return Response(body)
 
 @api_view(['POST'])
