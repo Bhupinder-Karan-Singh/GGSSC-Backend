@@ -11,7 +11,7 @@ import random
 from django.http import HttpResponse, FileResponse, Http404, JsonResponse
 from datetime import datetime
 from rest_framework import status
-
+from .validateUser import MobileUser
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -462,6 +462,7 @@ class candidateModel:
 
 @api_view(['GET'])
 def getEvents(request):
+    systemCheck()
     filter = {}
     filter['status'] = "Active"
     records = MongoMobileApp.find('events', filter)
@@ -473,6 +474,18 @@ def getEvents(request):
 
 @api_view(['GET'])
 def getAllEvents(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     filter = {}
     records = MongoMobileApp.find('events', {})
     i = 0
@@ -483,6 +496,18 @@ def getAllEvents(request):
 
 @api_view(['GET'])
 def getEvent(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     params = request.query_params
     filter = {}
     if 'payloadId' in params:
@@ -496,6 +521,18 @@ def getEvent(request):
 
 @api_view(['GET'])
 def getCandidatesList(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     params = request.query_params
     filter = {}
     if 'payloadId' in params:
@@ -517,6 +554,29 @@ def getCandidatesList(request):
 
 @api_view(['GET'])
 def getAllCandidates(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     filter = {}
     records = MongoMobileApp.find('participants', {})
     i = 0
@@ -528,6 +588,17 @@ def getAllCandidates(request):
 @api_view(['POST'])
 def createEvent(request):
     systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
     MongoMobileApp.createOne('events',body)
@@ -537,21 +608,46 @@ def createEvent(request):
 @api_view(['POST'])
 def saveEvent(request):
     systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
-    print(body['_id'])
     filter = {}
     filter['_id'] = body['_id']
-    MongoMobileApp.updateMany('events',filter,{'$set':body})
-    body = formModel.fromdb(body)
-    return Response(body)
+    record = MongoMobileApp.find('events',filter)
+    if isinstance(record, list) and len(record)>0:
+        body['participants'] = record[0]['participants']
+        MongoMobileApp.updateMany('events',filter,{'$set':body})
+        body = formModel.fromdb(body)
+        return Response(body)
+    else:
+        return Http404
 
 @api_view(['POST'])
 def saveCandidate(request):
     systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     body = json.loads(request.body.decode('utf-8'))
     body = candidateModel.todb(body)
-    print(body['_id'])
     filter = {}
     filter['_id'] = body['_id']
     MongoMobileApp.updateMany('participants',filter,{'$set':body})
@@ -771,6 +867,17 @@ def registerEvent(request):
 
 @api_view(['DELETE'])
 def deleteEvent(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
     params = request.query_params
     filter = {}
     if 'payloadId' in params:

@@ -29,7 +29,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin')
+CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin', 'token')
 INTERNAL_IPS=["127.0.0.1"]
 
 # Application definition
