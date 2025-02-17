@@ -540,15 +540,17 @@ def getCandidatesList(request):
     record = MongoMobileApp.find('events', filter)
     if isinstance(record, list) and len(record)>0:
         if 'participants' in record[0] and len(record[0]['participants'])>0:
-            participants = []
-            for participant in record[0]['participants']:
-                print(participant)
-                filter2 = {}
-                filter2['_id'] = ObjectId(participant)
-                result = MongoMobileApp.find('participants', filter2)
-                result = candidateModel.fromdb(result[0])
-                participants.append(result)
-            return Response(participants)
+            try:
+                participants = []
+                for participant in record[0]['participants']:
+                    filter2 = {}
+                    filter2['_id'] = ObjectId(participant)
+                    result = MongoMobileApp.find('participants', filter2)
+                    result = candidateModel.fromdb(result[0])
+                    participants.append(result)
+                return Response(participants)
+            except:
+                return Response([])
         else:
             return Response([])
 
