@@ -240,6 +240,7 @@ class registerModel:
             result['name'] = ""
         if 'dateOfBirth' in params:
             result['dateOfBirth'] = params['dateOfBirth']
+            result['age'] = calculate_age_2(params['dateOfBirth'])
         else:
             result['dateOfBirth'] = ""
         if 'fatherName' in params:
@@ -339,6 +340,10 @@ class registerModel:
             result['events'] = params['events']
         else:
             result['events'] = []
+        if 'age' in params:
+            result['age'] = params['age']
+        else:
+            result['age'] = ""
         return result
 
 class candidateModel:
@@ -400,6 +405,10 @@ class candidateModel:
             result['isEdited'] = params['isEdited']
         else:
             result['isEdited'] = ""
+        if 'age' in params:
+            result['age'] = params['age']
+        else:
+            result['age'] = ""
         return result
 
     def todb(params):
@@ -458,6 +467,10 @@ class candidateModel:
             result['isEdited'] = params['isEdited']
         else:
             result['isEdited'] = ""
+        if 'age' in params:
+            result['age'] = calculate_age(params['dateOfBirth'])
+        else:
+            result['age'] = ""
         return result
 
 @api_view(['GET'])
@@ -546,8 +559,11 @@ def getCandidatesList(request):
                     filter2 = {}
                     filter2['_id'] = ObjectId(participant)
                     result = MongoMobileApp.find('participants', filter2)
-                    result = candidateModel.fromdb(result[0])
-                    participants.append(result)
+                    if isinstance(result, list) and len(result)>0:
+                        result = candidateModel.fromdb(result[0])
+                        participants.append(result)
+                    else:
+                        pass
                 return Response(participants)
             except:
                 return Response([])
@@ -718,7 +734,7 @@ def registerEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
     body = registerModel.todb(body)
-
+    print(body)
     event_filter = {}
     event_filter['_id'] = ObjectId(body['eventId'])
     event = MongoMobileApp.find('events', event_filter)
@@ -951,3 +967,19 @@ def sendOtpEmail(random_number,email):
         print(f"Email sent successfully! Status code: {response.status_code}")
     except Exception as e:
         print(f"Failed to send email: {e}")
+
+def calculate_age(iso_date_str: str) -> int:
+    birth_date = datetime.strptime(iso_date_str, "%Y-%m-%d")  # Convert to datetime object
+    today = datetime.today()
+    age = today.year - birth_date.year
+    if (today.month, today.day) < (birth_date.month, birth_date.day):
+        age -= 1  # Adjust if birthday hasn't occurred this year
+    return age
+
+def calculate_age_2(iso_date_str: str) -> int:
+    birth_date = datetime.strptime(iso_date_str, "%Y-%m-%dT%H:%M:%S")  # Convert to datetime object
+    today = datetime.today()
+    age = today.year - birth_date.year
+    if (today.month, today.day) < (birth_date.month, birth_date.day):
+        age -= 1  # Adjust if birthday hasn't occurred this year
+    return age
