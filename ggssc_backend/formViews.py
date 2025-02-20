@@ -584,17 +584,6 @@ def getAllCandidates(request):
     else:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    sts = MobileUser.validate(request.headers)
-    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
-        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
-            pass
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
-
     filter = {}
     records = MongoMobileApp.find('participants', {})
     i = 0
