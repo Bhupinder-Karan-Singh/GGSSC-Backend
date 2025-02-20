@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from base64 import b64decode
 import time
-from cryptography.hazmat.primitives import serialization
 import jwt
 
 class MobileUser:
