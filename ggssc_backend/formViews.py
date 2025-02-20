@@ -239,7 +239,7 @@ class registerModel:
         else:
             result['name'] = ""
         if 'dateOfBirth' in params:
-            result['dateOfBirth'] = params['dateOfBirth']
+            result['dateOfBirth'] = params['dateOfBirth'].split("T")[0]
             result['age'] = calculate_age_2(params['dateOfBirth'])
         else:
             result['dateOfBirth'] = ""
@@ -479,11 +479,15 @@ def getEvents(request):
     filter = {}
     filter['status'] = "Active"
     records = MongoMobileApp.find('events', filter)
-    i = 0
-    while i<len(records):
-        records[i] = formModel.fromdb(records[i])
-        i = i+1
-    return Response(records)
+    events = []
+    if isinstance(records, list) and len(records)>0:
+        for record in records:
+            if datetime.strptime(record['endTime'], "%d %b %Y").date() < datetime.today().date():
+                pass
+            else:
+                record = formModel.fromdb(record)
+                events.append(record)
+    return Response(events)
 
 @api_view(['GET'])
 def getAllEvents(request):
@@ -723,7 +727,6 @@ def registerEvent(request):
     systemCheck()
     body = json.loads(request.body.decode('utf-8'))
     body = registerModel.todb(body)
-    print(body)
     event_filter = {}
     event_filter['_id'] = ObjectId(body['eventId'])
     event = MongoMobileApp.find('events', event_filter)
@@ -731,6 +734,8 @@ def registerEvent(request):
         try:
             if event[0]['status'] != "Active":
                 return Response("Event diabaled. Contact Administartor")
+            elif datetime.strptime(event[0]['endTime'], "%d %b %Y").date() < datetime.today().date():
+                return Response("Unfortunately the event is closed.")
             else:
                 pass
         except Exception as error:
@@ -748,6 +753,7 @@ def registerEvent(request):
             setData = {}
             setData['$set'] = {}
             setData['$set']['events'] = record[0]['events']
+            setData['$set']['age'] = body['age']
             MongoMobileApp.updateOne('participants', email_Filter, setData)
             event_filter = {}
             event_filter['_id'] = ObjectId(body['eventId'])
@@ -759,9 +765,7 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
-                    print("here1")
                     sendEmail(body)
-                    print("here11")
                     return Response("Candidate already registered with email. Event successfully registered")
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
@@ -771,7 +775,6 @@ def registerEvent(request):
                         setData['$set'] = {}
                         setData['$set']['events'] = record[0]['events']
                         MongoMobileApp.updateOne('participants', email_Filter, setData)
-                        print("here2")
                         return Response("Internal Server Error related to data update")
                     else:
                         print(f"Event ID {body['eventId']} not found in the list.")
@@ -784,7 +787,6 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['events'] = record[0]['events']
                     MongoMobileApp.updateOne('participants', email_Filter, setData)
-                    print("here3")
                     return Response("Internal Server Error related to data update")
                 else:
                     print(f"Event ID {body['eventId']} not found in the list.")
@@ -809,6 +811,7 @@ def registerEvent(request):
             setData = {}
             setData['$set'] = {}
             setData['$set']['events'] = record[0]['events']
+            setData['$set']['age'] = body['age']
             MongoMobileApp.updateOne('participants', filter, setData)
             event_filter = {}
             event_filter['_id'] = ObjectId(body['eventId'])
@@ -850,12 +853,10 @@ def registerEvent(request):
             return Response("Candidate already registered with details. Event is already registered")
     else:
         print("new candidate")
-
         current_date = datetime.today().strftime('%y%m')  # Format: YYMM
         allRecords = MongoMobileApp.find('participants', {})
         rollNumber = current_date + str(len(allRecords)+1)
         body['rollNumber'] = rollNumber
-
         body['events'].append(body['eventId'])
         record = MongoMobileApp.createOne('participants', body)
         event_filter = {}
