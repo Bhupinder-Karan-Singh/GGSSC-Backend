@@ -8,6 +8,13 @@ urlpatterns = [
     path('createEvent', formViews.createEvent),
     path('deleteEvent', formViews.deleteEvent),
     path('getEvents', formViews.getEvents),
+    path('getAllEvents', formViews.getAllEvents),
     path('getEvent', formViews.getEvent),
     path('saveEvent', formViews.saveEvent),
+    path('registerEvent', formViews.registerEvent),
+    path('sendOtp',formViews.sendOtp),
+    path('verifyOtp',formViews.verifyOtp),
+    path('getAllCandidates',formViews.getAllCandidates),
+    path('saveCandidate',formViews.saveCandidate),
+    path('getCandidatesList',formViews.getCandidatesList),
 ]
