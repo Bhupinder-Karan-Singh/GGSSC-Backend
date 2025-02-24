@@ -482,7 +482,7 @@ def getEvents(request):
     events = []
     if isinstance(records, list) and len(records)>0:
         for record in records:
-            if datetime.strptime(record['endTime'], "%d %b %Y").date() < datetime.today().date():
+            if datetime.strptime(record['startTime'], "%d %b %Y").date() > datetime.today().date() or datetime.strptime(record['endTime'], "%d %b %Y").date() < datetime.today().date():
                 pass
             else:
                 record = formModel.fromdb(record)
@@ -901,8 +901,8 @@ def json_converter(o):
     raise TypeError(f"Type {o} not serializable")
 
 def sendEmail(body):
-    sendgrid_api_key = "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"
-    sender_email = "karansingh1455@gmail.com"
+    sendgrid_api_key = "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"
+    sender_email = "web.ggssc.canada@gmail.com"
     recipient_email = body['email']
     subject = "GGSSC - Registration successful "
     emailBody = "Thank you for registration " + "\n\n"
@@ -936,7 +936,7 @@ def sendEmail(body):
 
 def sendOtpEmail(random_number,email):
     sendgrid_api_key = "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"
-    sender_email = "karansingh1455@gmail.com"
+    sender_email = "web.ggssc.canada@gmail.com"
     recipient_email = email
     subject = "GGSSC verification code"
     emailBody = "Registration Verification code is " + str(random_number)
