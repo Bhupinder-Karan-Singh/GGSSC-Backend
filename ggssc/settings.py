@@ -25,10 +25,16 @@ SECRET_KEY = 'django-insecure-h(5!@@t*ci#(t$f1ad0q+$*_nm6#f)j3!3=24ege#kug0@=or@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin')
+CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin', 'token')
 INTERNAL_IPS=["127.0.0.1"]
+CORS_ALLOWED_ORIGINS = [
+    "https://ggssccrashcourses.firebaseapp.com",
+    "https://bhupinderkaransingh.com",  # Keep your domain
+]
 
 # Application definition
 
@@ -92,7 +98,7 @@ MONGOMOBILEAPP = {
     'port': "27017",
     'dbname': "ggsscca",
     'authentication': "true",
-    'username': "backend",
+    'username': "ggssc",
     'password': "1234",
 }
 
