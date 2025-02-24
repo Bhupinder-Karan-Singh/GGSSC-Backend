@@ -31,11 +31,6 @@ ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin', 'token')
 INTERNAL_IPS=["127.0.0.1"]
-CORS_ALLOWED_ORIGINS = [
-    "https://ggssccrashcourses.firebaseapp.com",
-    "https://bhupinderkaransingh.com",  # Keep your domain
-]
-
 # Application definition
 
 INSTALLED_APPS = [
