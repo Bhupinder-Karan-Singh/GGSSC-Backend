@@ -13,7 +13,7 @@ class MongoMobileApp:
             self.__mongoConfig = settings.MONGOMOBILEAPP 
             #client = pymongo.MongoClient("mongodb://ranDBAdmin:testserver81@172.25.220.81/ranDB?authSource=admin")
             if self.__mongoConfig['authentication'] == 'True' or self.__mongoConfig['authentication'] == 'true' or self.__mongoConfig['authentication'] == True:
-                baseString = "mongodb+srv://"+ self.__mongoConfig['username']+ ":"+ self.__mongoConfig['password']+"@cluster0.tbkwx.mongodb.net/test"
+                baseString = "mongodb+srv://"+ self.__mongoConfig['username']+ ":"+ self.__mongoConfig['password']+"@cluster0.xebhn.mongodb.net/"
                 connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             else:
@@ -28,7 +28,7 @@ class MongoMobileApp:
         if MongoMobileApp.__instance == None:
             MongoMobileApp.__mongoConfig = settings.MONGOMOBILEAPP
             if MongoMobileApp.__mongoConfig['authentication'] == True or MongoMobileApp.__mongoConfig['authentication'] == 'True' or MongoMobileApp.__mongoConfig['authentication'] == 'true':
-                baseString = "mongodb+srv://"+ MongoMobileApp.__mongoConfig['username']+ ":"+ MongoMobileApp.__mongoConfig['password']+"@cluster0.tbkwx.mongodb.net/test"
+                baseString = "mongodb+srv://"+ MongoMobileApp.__mongoConfig['username']+ ":"+ MongoMobileApp.__mongoConfig['password']+"@cluster0.xebhn.mongodb.net/"
                 connectionString = baseString
                 client = pymongo.MongoClient(connectionString)
             else:
