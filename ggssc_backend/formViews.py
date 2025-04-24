@@ -15,6 +15,12 @@ from .validateUser import MobileUser
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+import boto3
+from django.conf import settings
+from botocore.exceptions import NoCredentialsError
+import base64
+import io
+import uuid
 
 def systemCheck():
     collections = MongoMobileApp.listCollections()
@@ -612,6 +618,18 @@ def createEvent(request):
 
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
+
+    base64_data = body['images']['coverPhoto'][0]['imageFile']['img']
+    original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
+    unique_filename = generate_unique_filename(original_filename)
+    content_type = "application/octet-stream"
+    s3_key = f"uploads/{unique_filename}"
+    
+    file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
+    print(file_url)
+
+    body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
+
     MongoMobileApp.createOne('events',body)
     body = formModel.fromdb(body)
     return Response(body)
@@ -637,6 +655,23 @@ def saveEvent(request):
     record = MongoMobileApp.find('events',filter)
     if isinstance(record, list) and len(record)>0:
         body['participants'] = record[0]['participants']
+
+        base64_data = body['images']['coverPhoto'][0]['imageFile']['img']
+
+        if 'base64' in base64_data:
+            print("file changes")
+            original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
+            unique_filename = generate_unique_filename(original_filename)
+            content_type = "application/octet-stream"
+            s3_key = f"uploads/{unique_filename}"
+            
+            file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
+            print(file_url)
+
+            body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
+        else:
+            print("same file")
+
         MongoMobileApp.updateMany('events',filter,{'$set':body})
         body = formModel.fromdb(body)
         return Response(body)
@@ -733,7 +768,7 @@ def registerEvent(request):
     if isinstance(event, list) and len(event)>0:
         try:
             if event[0]['status'] != "Active":
-                return Response("Event diabaled. Contact Administartor")
+                return Response("Event disbaled. Contact Administartor")
             elif datetime.strptime(event[0]['endTime'], "%d %b %Y").date() < datetime.today().date():
                 return Response("Unfortunately the event is closed.")
             else:
@@ -858,6 +893,18 @@ def registerEvent(request):
         rollNumber = current_date + str(len(allRecords)+1)
         body['rollNumber'] = rollNumber
         body['events'].append(body['eventId'])
+
+        base64_data = body['images']['profilePhoto'][0]['imageFile']['img']
+        original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
+        unique_filename = generate_unique_filename(original_filename)
+        content_type = "application/octet-stream"
+        s3_key = f"uploads/{unique_filename}"
+
+        file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
+        print(file_url)
+
+        body['images']['profilePhoto'][0]['imageFile']['img'] = file_url
+
         record = MongoMobileApp.createOne('participants', body)
         event_filter = {}
         event_filter['_id'] = ObjectId(body['eventId'])
@@ -935,7 +982,7 @@ def sendEmail(body):
         print(f"Failed to send email: {e}")
 
 def sendOtpEmail(random_number,email):
-    sendgrid_api_key = "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"
+    sendgrid_api_key = "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"
     sender_email = "web.ggssc.canada@gmail.com"
     recipient_email = email
     subject = "GGSSC verification code"
@@ -973,3 +1020,46 @@ def calculate_age_2(iso_date_str: str) -> int:
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1  # Adjust if birthday hasn't occurred this year
     return age
+
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    region_name=settings.AWS_S3_REGION_NAME
+)
+
+def upload_base64_to_s3(base64_data, s3_key, content_type='application/octet-stream', make_public=True):
+    
+    # Safety check
+    if isinstance(base64_data, bytes):
+        raise TypeError("Expected base64 string, got bytes. Decode the source to str before calling this function.")
+    if isinstance(base64_data, io.BytesIO):
+        raise TypeError("Expected base64 string, got BytesIO. Pass a base64 string.")
+
+    # If it has a data URI prefix, remove it
+    if ',' in base64_data:
+        base64_data = base64_data.split(',')[1]
+
+    try:
+        file_bytes = base64.b64decode(base64_data)
+    except Exception as e:
+        raise ValueError(f"Invalid base64 string: {e}")
+
+    file_obj = io.BytesIO(file_bytes)
+
+    extra_args = {'ContentType': content_type}
+
+    s3.upload_fileobj(
+        Fileobj=file_obj,
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+        Key=s3_key,
+        ExtraArgs=extra_args
+    )
+
+    return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
+
+def generate_unique_filename(original_filename):
+    filename = os.path.splitext(original_filename)[0]
+    ext = os.path.splitext(original_filename)[1]  # get .jpg, .png etc.
+    unique_id = uuid.uuid4().hex  # or use datetime.now().strftime("%Y%m%d%H%M%S")
+    return f"{unique_id}_{filename}{ext}"
