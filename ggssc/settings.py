@@ -31,11 +31,6 @@ ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin', 'token')
 INTERNAL_IPS=["127.0.0.1"]
-CORS_ALLOWED_ORIGINS = [
-    "https://ggssccrashcourses.firebaseapp.com",
-    "https://bhupinderkaransingh.com",  # Keep your domain
-]
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -143,3 +138,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AWS_ACCESS_KEY_ID = 'AKIA3CMCCYLWV43EER7U'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'ggssc-bucket'
+AWS_S3_REGION_NAME = 'ca-central-1'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
