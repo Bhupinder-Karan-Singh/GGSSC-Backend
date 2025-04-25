@@ -623,7 +623,8 @@ def createEvent(request):
     original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
     unique_filename = generate_unique_filename(original_filename)
     content_type = "application/octet-stream"
-    s3_key = f"uploads/{unique_filename}"
+    now = datetime.now()
+    s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
     
     file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
     print(file_url)
@@ -663,7 +664,7 @@ def saveEvent(request):
             original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
             unique_filename = generate_unique_filename(original_filename)
             content_type = "application/octet-stream"
-            s3_key = f"uploads/{unique_filename}"
+            s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
             
             file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
             print(file_url)
@@ -898,7 +899,7 @@ def registerEvent(request):
         original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
         unique_filename = generate_unique_filename(original_filename)
         content_type = "application/octet-stream"
-        s3_key = f"uploads/{unique_filename}"
+        s3_key = f"uploads/candidates/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{body['name']}/{unique_filename}"
 
         file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
         print(file_url)
@@ -1059,7 +1060,6 @@ def upload_base64_to_s3(base64_data, s3_key, content_type='application/octet-str
     return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
 
 def generate_unique_filename(original_filename):
-    filename = os.path.splitext(original_filename)[0]
     ext = os.path.splitext(original_filename)[1]  # get .jpg, .png etc.
     unique_id = uuid.uuid4().hex  # or use datetime.now().strftime("%Y%m%d%H%M%S")
-    return f"{unique_id}_{filename}{ext}"
+    return f"{unique_id}{ext}"
