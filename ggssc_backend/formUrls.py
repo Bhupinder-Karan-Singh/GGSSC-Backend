@@ -7,6 +7,7 @@ from rest_framework import routers
 urlpatterns = [
     path('createEvent', formViews.createEvent),
     path('deleteEvent', formViews.deleteEvent),
+    path('deleteCandidate', formViews.deleteCandidate),
     path('getEvents', formViews.getEvents),
     path('getAllEvents', formViews.getAllEvents),
     path('getEvent', formViews.getEvent),

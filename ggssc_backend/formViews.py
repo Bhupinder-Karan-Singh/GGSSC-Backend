@@ -945,6 +945,26 @@ def deleteEvent(request):
     MongoMobileApp.deleteMany('events', filter)
     return Response("Deleted")
 
+@api_view(['DELETE'])
+def deleteCandidate(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+    params = request.query_params
+    filter = {}
+    if 'candidateId' in params:
+        filter['_id'] = ObjectId(params['candidateId'])
+    MongoMobileApp.deleteMany('participants', filter)
+    return Response("Deleted")
+
 
 # Custom JSON serializer for MongoDB's ObjectId
 def json_converter(o):
