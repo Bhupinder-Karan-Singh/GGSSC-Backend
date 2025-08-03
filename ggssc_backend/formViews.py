@@ -21,6 +21,9 @@ from botocore.exceptions import NoCredentialsError
 import base64
 import io
 import uuid
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 def systemCheck():
     collections = MongoMobileApp.listCollections()
@@ -719,8 +722,9 @@ def sendOtp(request):
             setData['$set'] = {}
             setData['$set']['otps'] = record[0]['otps']
             MongoMobileApp.updateOne('otps', otp_filter, setData)
-            sendOtpEmail(random_number,body['email'])
-            return Response("Email already exists. Code sent to email : "+ str(body['email']))
+            response = sendOtpEmail(random_number,body['email'])
+            print(response)
+            return Response("Email already exists. "+ response)
         except Exception as error:
             return Response("Internal Server Error")
     else:
@@ -728,8 +732,8 @@ def sendOtp(request):
             body['otps'] = []
             body['otps'].append(random_number)
             MongoMobileApp.createOne('otps',body)
-            sendOtpEmail(random_number,body['email'])
-            return Response("New Email saved. Code sent to email : "+ str(body['email']))
+            response = sendOtpEmail(random_number,body['email'])
+            return Response("New Email saved." + response)
         except Exception as error:
             return Response("Internal Server Error")
 
@@ -801,8 +805,8 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
-                    sendEmail(body)
-                    return Response("Candidate already registered with email. Event successfully registered")
+                    response = sendEmail(body)
+                    return Response("Candidate already registered with email. Event successfully registered. " + response)
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
                         index = record[0]['events'].index(body['eventId'])
@@ -859,8 +863,8 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
-                    sendEmail(body)
-                    return Response("Candidate already registered with details. Event successfully registered")
+                    response = sendEmail(body)
+                    return Response("Candidate already registered with details. Event successfully registered." + response)
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
                         index = record[0]['events'].index(body['eventId'])
@@ -916,8 +920,8 @@ def registerEvent(request):
             setData['$set'] = {}
             setData['$set']['participants'] = event[0]['participants']
             MongoMobileApp.updateOne('events', event_filter, setData)
-            sendEmail(body)
-            return Response("New Candidate Registered. Event successfully registered")
+            response = sendEmail(body)
+            return Response("New Candidate Registered. Event successfully registered. " + response)
         else:
             return Response("Error Occurred")
 
@@ -948,63 +952,123 @@ def json_converter(o):
         return str(o)  # Convert ObjectId to string
     raise TypeError(f"Type {o} not serializable")
 
-def sendEmail(body):
-    sendgrid_api_key = "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"
-    sender_email = "web.ggssc.canada@gmail.com"
-    recipient_email = body['email']
-    subject = "GGSSC - Registration successful "
-    emailBody = "Thank you for registration " + "\n\n"
+# def sendEmail(body):
+#     sendgrid_api_key = "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"
+#     sender_email = "web.ggssc.canada@gmail.com"
+#     recipient_email = body['email']
+#     subject = "GGSSC - Registration successful "
+#     emailBody = "Thank you for registration " + "\n\n"
 
-    emailBody += "The details are as follows :\n\n"
+#     emailBody += "The details are as follows :\n\n"
     
-    emailBody += "Roll Number : " + body['rollNumber'] + "\n"
-    emailBody += "Name : " + body['name'] + "\n"
-    emailBody += "Event name : " + body['eventName']  + "\n"
-    emailBody += "Location : " + body['location']  + "\n\n"
+#     emailBody += "Roll Number : " + body['rollNumber'] + "\n"
+#     emailBody += "Name : " + body['name'] + "\n"
+#     emailBody += "Event name : " + body['eventName']  + "\n"
+#     emailBody += "Location : " + body['location']  + "\n\n"
 
-    emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh" + "\n"
+#     emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh" + "\n"
+#     emailBody += "GGSSC Canada"
+
+#     try:
+#         # Create the email content
+#         message = Mail(
+#             from_email=sender_email,
+#             to_emails=recipient_email,
+#             subject=subject,
+#             plain_text_content=emailBody
+#         )
+#         # Initialize the SendGrid client
+#         sg = SendGridAPIClient(sendgrid_api_key)
+#         response = sg.client.api_keys.get()
+#         # Send the email
+#         response = sg.send(message)
+#         print(f"Email sent successfully! Status code: {response.status_code}")
+#     except Exception as e:
+#         print(f"Failed to send email: {e}")
+
+# def sendOtpEmail(random_number,email):
+#     sendgrid_api_key = "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"
+#     sender_email = "web.ggssc.canada@gmail.com"
+#     recipient_email = email
+#     subject = "GGSSC verification code"
+#     emailBody = "Registration Verification code is " + str(random_number)
+
+#     try:
+#         # Create the email content
+#         message = Mail(
+#             from_email=sender_email,
+#             to_emails=recipient_email,
+#             subject=subject,
+#             plain_text_content=emailBody
+#         )
+#         # Initialize the SendGrid client
+#         sg = SendGridAPIClient(sendgrid_api_key)
+#         response = sg.client.api_keys.get()
+#         # Send the email
+#         response = sg.send(message)
+#         print(f"Email sent successfully! Status code: {response.status_code}")
+#         return "Email sent successfully to " + email
+#     except Exception as e:
+#         print(f"Failed to send email: {e}")
+#         return "Failed to send email : " + str(e)
+
+def sendOtpEmail(random_number, recipient_email):
+    sender_email = "web.ggssc.canada@gmail.com"
+    app_password = "wmxultabswjgerzf"  # not your Gmail login password
+
+    subject = "GGSSC verification code"
+    body = f"Registration Verification code is {random_number}"
+
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+        print(f"Email sent successfully to {recipient_email}")
+        return f"Email sent successfully to {recipient_email}"
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return "Failed to send email: " + str(e)
+
+def sendEmail(body):
+    sender_email = "web.ggssc.canada@gmail.com"
+    app_password = "wmxultabswjgerzf"  # Replace with your actual App Password
+    recipient_email = body['email']
+    subject = "GGSSC - Registration successful"
+
+    # Construct the email body text
+    emailBody = "Thank you for registration \n\n"
+    emailBody += "The details are as follows :\n\n"
+    emailBody += "Roll Number : " + body.get('rollNumber', '') + "\n"
+    emailBody += "Name : " + body.get('name', '') + "\n"
+    emailBody += "Event name : " + body.get('eventName', '') + "\n"
+    emailBody += "Location : " + body.get('location', '') + "\n\n"
+    emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh\n"
     emailBody += "GGSSC Canada"
 
-    try:
-        # Create the email content
-        message = Mail(
-            from_email=sender_email,
-            to_emails=recipient_email,
-            subject=subject,
-            plain_text_content=emailBody
-        )
-        # Initialize the SendGrid client
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.client.api_keys.get()
-        # Send the email
-        response = sg.send(message)
-        print(f"Email sent successfully! Status code: {response.status_code}")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-
-def sendOtpEmail(random_number,email):
-    sendgrid_api_key = "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"
-    sender_email = "web.ggssc.canada@gmail.com"
-    recipient_email = email
-    subject = "GGSSC verification code"
-    emailBody = "Registration Verification code is " + str(random_number)
+    # Prepare email message
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(emailBody, "plain"))
 
     try:
-        # Create the email content
-        message = Mail(
-            from_email=sender_email,
-            to_emails=recipient_email,
-            subject=subject,
-            plain_text_content=emailBody
-        )
-        # Initialize the SendGrid client
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.client.api_keys.get()
-        # Send the email
-        response = sg.send(message)
-        print(f"Email sent successfully! Status code: {response.status_code}")
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+        print(f"Email sent successfully to {recipient_email}")
+        return f"Email sent successfully to {recipient_email}"
     except Exception as e:
         print(f"Failed to send email: {e}")
+        return "Failed to send email: " + str(e)
 
 def calculate_age(iso_date_str: str) -> int:
     birth_date = datetime.strptime(iso_date_str, "%Y-%m-%d")  # Convert to datetime object
