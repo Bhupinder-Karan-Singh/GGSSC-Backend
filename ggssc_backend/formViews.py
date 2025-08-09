@@ -296,6 +296,14 @@ class registerModel:
             result['isEdited'] = params['isEdited']
         else:
             result['isEdited'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""
         result['events'] = []
         return result
 
@@ -418,6 +426,14 @@ class candidateModel:
             result['age'] = params['age']
         else:
             result['age'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""
         return result
 
     def todb(params):
@@ -480,6 +496,14 @@ class candidateModel:
             result['age'] = calculate_age(params['dateOfBirth'])
         else:
             result['age'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""
         return result
 
 @api_view(['GET'])
@@ -832,7 +856,7 @@ def registerEvent(request):
                     print(f"Event ID {body['eventId']} not found in the list.")
                     return Response("Internal Server Error : "+str(error))
         else:
-            return Response("Candidate already registered with email. Event is already regeistered")
+            return Response("Candidate already registered with email. Event is already registered.")
     else:
         pass
 
