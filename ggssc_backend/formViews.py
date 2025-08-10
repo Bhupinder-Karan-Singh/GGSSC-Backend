@@ -856,7 +856,7 @@ def registerEvent(request):
                     print(f"Event ID {body['eventId']} not found in the list.")
                     return Response("Internal Server Error : "+str(error))
         else:
-            return Response("Candidate already registered with email. Event is already registered.")
+            return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
     else:
         pass
 
@@ -914,7 +914,7 @@ def registerEvent(request):
                     print(f"Event ID {body['eventId']} not found in the list.")
                     return Response("Internal Server Error : "+str(error))
         else:
-            return Response("Candidate already registered with details. Event is already registered")
+            return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
     else:
         print("new candidate")
         current_date = datetime.today().strftime('%y%m')  # Format: YYMM
@@ -967,7 +967,7 @@ def deleteEvent(request):
     if 'payloadId' in params:
         filter['_id'] = ObjectId(params['payloadId'])
     MongoMobileApp.deleteMany('events', filter)
-    return Response("Deleted")
+    return Response("Event successfully Deleted")
 
 @api_view(['DELETE'])
 def deleteCandidate(request):
@@ -986,9 +986,74 @@ def deleteCandidate(request):
     filter = {}
     if 'candidateId' in params:
         filter['_id'] = ObjectId(params['candidateId'])
-    MongoMobileApp.deleteMany('participants', filter)
-    return Response("Deleted")
+    result = MongoMobileApp.deleteMany('participants', filter)
+    if result == 1:
+        records = MongoMobileApp.find('events', {})
+        i = 0
+        while i<len(records):
+            participants = records[i]['participants']
+            if params['candidateId'] in participants:
+                participants.remove(params['candidateId'])
+                setData = {}
+                setData['$set'] = {}
+                setData['$set']['participants'] = participants
+                filter2={}
+                filter2['_id'] = ObjectId(records[i]['_id'])
+                result = MongoMobileApp.updateOne('events', filter2, setData)
+                print(result)
+                print(i)
+            i = i+1
+        return Response("Candidate permanently deleted from database")
 
+@api_view(['DELETE'])
+def removeCandidate(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+    params = request.query_params
+    filter = {}
+    if 'eventId' in params:
+        filter['_id'] = ObjectId(params['eventId'])
+    
+    record = MongoMobileApp.find('events', filter)
+    if isinstance(record, list) and len(record)>0:
+        if 'candidateId' in params:
+            participants = record[0]['participants']
+            if params['candidateId'] in participants:
+                participants.remove(params['candidateId'])
+                setData = {}
+                setData['$set'] = {}
+                setData['$set']['participants'] = participants
+                result = MongoMobileApp.updateOne('events', filter, setData)
+
+                if result == 1:
+                    print("1")
+                    filter2 = {}
+                    filter2['_id'] = ObjectId(params['candidateId'])
+                    record2 = MongoMobileApp.find('participants', filter2) 
+                    print("2")
+                    if isinstance(record2, list) and len(record2)>0:
+                        print("3")
+                        if 'eventId' in params:
+                            print("4")
+                            events = record2[0]['events']
+                            if params['eventId'] in events:
+                                events.remove(params['eventId'])
+                                filter3 = {}
+                                setData = {}
+                                setData['$set'] = {}
+                                setData['$set']['events'] = events
+                                MongoMobileApp.updateOne('participants', filter2, setData)  
+                                return Response("Candidate Removed from the event")
+    
 
 # Custom JSON serializer for MongoDB's ObjectId
 def json_converter(o):
