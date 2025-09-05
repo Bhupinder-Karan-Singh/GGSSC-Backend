@@ -654,7 +654,6 @@ def createEvent(request):
     s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
     
     file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-    print(file_url)
 
     body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
 
@@ -687,14 +686,12 @@ def saveEvent(request):
         base64_data = body['images']['coverPhoto'][0]['imageFile']['img']
 
         if 'base64' in base64_data:
-            print("file changes")
             original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
             unique_filename = generate_unique_filename(original_filename)
             content_type = "application/octet-stream"
             s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
             
             file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-            print(file_url)
 
             body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
         else:
@@ -747,7 +744,6 @@ def sendOtp(request):
             setData['$set']['otps'] = record[0]['otps']
             MongoMobileApp.updateOne('otps', otp_filter, setData)
             response = sendOtpEmail(random_number,body['email'])
-            print(response)
             return Response("Email already exists. "+ response)
         except Exception as error:
             return Response("Internal Server Error")
@@ -930,7 +926,6 @@ def registerEvent(request):
         s3_key = f"uploads/candidates/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{body['name']}/{unique_filename}"
 
         file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-        print(file_url)
 
         body['images']['profilePhoto'][0]['imageFile']['img'] = file_url
 
@@ -1000,8 +995,6 @@ def deleteCandidate(request):
                 filter2={}
                 filter2['_id'] = ObjectId(records[i]['_id'])
                 result = MongoMobileApp.updateOne('events', filter2, setData)
-                print(result)
-                print(i)
             i = i+1
         return Response("Candidate permanently deleted from database")
 
@@ -1035,15 +1028,11 @@ def removeCandidate(request):
                 result = MongoMobileApp.updateOne('events', filter, setData)
 
                 if result == 1:
-                    print("1")
                     filter2 = {}
                     filter2['_id'] = ObjectId(params['candidateId'])
                     record2 = MongoMobileApp.find('participants', filter2) 
-                    print("2")
                     if isinstance(record2, list) and len(record2)>0:
-                        print("3")
                         if 'eventId' in params:
-                            print("4")
                             events = record2[0]['events']
                             if params['eventId'] in events:
                                 events.remove(params['eventId'])
