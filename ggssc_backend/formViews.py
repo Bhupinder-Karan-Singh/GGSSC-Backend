@@ -21,6 +21,9 @@ from botocore.exceptions import NoCredentialsError
 import base64
 import io
 import uuid
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 def systemCheck():
     collections = MongoMobileApp.listCollections()
@@ -261,10 +264,18 @@ class registerModel:
             result['email'] = params['email']
         else:
             result['email'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
         if 'phoneNumber' in params:
             result['phoneNumber'] = params['phoneNumber']
         else:
             result['phoneNumber'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -293,7 +304,20 @@ class registerModel:
             result['isEdited'] = params['isEdited']
         else:
             result['isEdited'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""  
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
         result['events'] = []
+        result['eventHistory'] = []
         return result
 
     def fromdb(params):
@@ -322,10 +346,18 @@ class registerModel:
             result['email'] = params['email']
         else:
             result['email'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
         if 'phoneNumber' in params:
             result['phoneNumber'] = params['phoneNumber']
         else:
             result['phoneNumber'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -350,6 +382,10 @@ class registerModel:
             result['age'] = params['age']
         else:
             result['age'] = ""
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
         return result
 
 class candidateModel:
@@ -415,6 +451,14 @@ class candidateModel:
             result['age'] = params['age']
         else:
             result['age'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""
         return result
 
     def todb(params):
@@ -477,6 +521,14 @@ class candidateModel:
             result['age'] = calculate_age(params['dateOfBirth'])
         else:
             result['age'] = ""
+        if 'category' in params:
+            result['category'] = params['category']
+        else:
+            result['category'] = ""
+        if 'comments' in params:
+            result['comments'] = params['comments']
+        else:
+            result['comments'] = ""
         return result
 
 @api_view(['GET'])
@@ -623,10 +675,10 @@ def createEvent(request):
     original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
     unique_filename = generate_unique_filename(original_filename)
     content_type = "application/octet-stream"
-    s3_key = f"uploads/{unique_filename}"
+    now = datetime.now()
+    s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
     
     file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-    print(file_url)
 
     body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
 
@@ -659,14 +711,12 @@ def saveEvent(request):
         base64_data = body['images']['coverPhoto'][0]['imageFile']['img']
 
         if 'base64' in base64_data:
-            print("file changes")
             original_filename = body['images']['coverPhoto'][0]['imageFile']['title']
             unique_filename = generate_unique_filename(original_filename)
             content_type = "application/octet-stream"
-            s3_key = f"uploads/{unique_filename}"
+            s3_key = f"uploads/events/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{unique_filename}"
             
             file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-            print(file_url)
 
             body['images']['coverPhoto'][0]['imageFile']['img'] = file_url
         else:
@@ -718,8 +768,8 @@ def sendOtp(request):
             setData['$set'] = {}
             setData['$set']['otps'] = record[0]['otps']
             MongoMobileApp.updateOne('otps', otp_filter, setData)
-            sendOtpEmail(random_number,body['email'])
-            return Response("Email already exists. Code sent to email : "+ str(body['email']))
+            response = sendOtpEmail(random_number,body['email'])
+            return Response("Email already exists. "+ response)
         except Exception as error:
             return Response("Internal Server Error")
     else:
@@ -727,8 +777,8 @@ def sendOtp(request):
             body['otps'] = []
             body['otps'].append(random_number)
             MongoMobileApp.createOne('otps',body)
-            sendOtpEmail(random_number,body['email'])
-            return Response("New Email saved. Code sent to email : "+ str(body['email']))
+            response = sendOtpEmail(random_number,body['email'])
+            return Response("New Email saved." + response)
         except Exception as error:
             return Response("Internal Server Error")
 
@@ -776,66 +826,66 @@ def registerEvent(request):
         except Exception as error:
             return Response("Internal Server Error")
 
-    email_Filter = {}
-    email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
-    record = MongoMobileApp.find('participants', email_Filter)
-    if isinstance(record, list) and len(record)>0:
-        msg = "From email"
-        print(msg)
-        if body['eventId'] not in record[0]['events']:
-            body['rollNumber'] = record[0]['rollNumber'] 
-            record[0]['events'].append(body['eventId'])
-            setData = {}
-            setData['$set'] = {}
-            setData['$set']['events'] = record[0]['events']
-            setData['$set']['age'] = body['age']
-            MongoMobileApp.updateOne('participants', email_Filter, setData)
-            event_filter = {}
-            event_filter['_id'] = ObjectId(body['eventId'])
-            event = MongoMobileApp.find('events', event_filter)
-            if isinstance(event, list) and len(event)>0:
-                try:
-                    event[0]['participants'].append(str(record[0]['_id']))
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['participants'] = event[0]['participants']
-                    MongoMobileApp.updateOne('events', event_filter, setData)
-                    sendEmail(body)
-                    return Response("Candidate already registered with email. Event successfully registered")
-                except Exception as error:
-                    if body['eventId'] in record[0]['events']:
-                        index = record[0]['events'].index(body['eventId'])
-                        record[0]['events'].pop(index)
-                        setData = {}
-                        setData['$set'] = {}
-                        setData['$set']['events'] = record[0]['events']
-                        MongoMobileApp.updateOne('participants', email_Filter, setData)
-                        return Response("Internal Server Error related to data update")
-                    else:
-                        print(f"Event ID {body['eventId']} not found in the list.")
-                        return Response("Internal Server Error : "+str(error))
-            else:
-                if body['eventId'] in record[0]['events']:
-                    index = record[0]['events'].index(body['eventId'])
-                    record[0]['events'].pop(index)
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['events'] = record[0]['events']
-                    MongoMobileApp.updateOne('participants', email_Filter, setData)
-                    return Response("Internal Server Error related to data update")
-                else:
-                    print(f"Event ID {body['eventId']} not found in the list.")
-                    return Response("Internal Server Error : "+str(error))
-        else:
-            return Response("Candidate already registered with email. Event is already regeistered")
-    else:
-        pass
+    # email_Filter = {}
+    # email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
+    # record = MongoMobileApp.find('participants', email_Filter)
+    # if isinstance(record, list) and len(record)>0:
+    #     msg = "From email"
+    #     print(msg)
+    #     if body['eventId'] not in record[0]['events']:
+    #         body['rollNumber'] = record[0]['rollNumber'] 
+    #         record[0]['events'].append(body['eventId'])
+    #         setData = {}
+    #         setData['$set'] = {}
+    #         setData['$set']['events'] = record[0]['events']
+    #         setData['$set']['age'] = body['age']
+    #         MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #         event_filter = {}
+    #         event_filter['_id'] = ObjectId(body['eventId'])
+    #         event = MongoMobileApp.find('events', event_filter)
+    #         if isinstance(event, list) and len(event)>0:
+    #             try:
+    #                 event[0]['participants'].append(str(record[0]['_id']))
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['participants'] = event[0]['participants']
+    #                 MongoMobileApp.updateOne('events', event_filter, setData)
+    #                 response = sendEmail(body)
+    #                 return Response("Candidate already registered with email. Event successfully registered. " + response)
+    #             except Exception as error:
+    #                 if body['eventId'] in record[0]['events']:
+    #                     index = record[0]['events'].index(body['eventId'])
+    #                     record[0]['events'].pop(index)
+    #                     setData = {}
+    #                     setData['$set'] = {}
+    #                     setData['$set']['events'] = record[0]['events']
+    #                     MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #                     return Response("Internal Server Error related to data update")
+    #                 else:
+    #                     print(f"Event ID {body['eventId']} not found in the list.")
+    #                     return Response("Internal Server Error : "+str(error))
+    #         else:
+    #             if body['eventId'] in record[0]['events']:
+    #                 index = record[0]['events'].index(body['eventId'])
+    #                 record[0]['events'].pop(index)
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['events'] = record[0]['events']
+    #                 MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #                 return Response("Internal Server Error related to data update")
+    #             else:
+    #                 print(f"Event ID {body['eventId']} not found in the list.")
+    #                 return Response("Internal Server Error : "+str(error))
+    #     else:
+    #         return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
+    # else:
+    #     pass
 
     filter = {}
     filter['name'] = {'$regex': f"^{body['name']}$", '$options': 'i'}
     filter['dateOfBirth'] = body['dateOfBirth']
-    filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
-    filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
+    # filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
+    # filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
     record = MongoMobileApp.find('participants', filter)
     if isinstance(record, list) and len(record)>0:
         msg = "From details"
@@ -843,9 +893,15 @@ def registerEvent(request):
         if body['eventId'] not in record[0]['events']:
             body['rollNumber'] = record[0]['rollNumber'] 
             record[0]['events'].append(body['eventId'])
+            record[0]['eventHistory'].append({
+                'eventId' : body['eventId'],
+                'eventName' : body['eventName'],
+                'age' : body['age']
+            })
             setData = {}
             setData['$set'] = {}
             setData['$set']['events'] = record[0]['events']
+            setData['$set']['eventHistory'] = record[0]['eventHistory']
             setData['$set']['age'] = body['age']
             MongoMobileApp.updateOne('participants', filter, setData)
             event_filter = {}
@@ -858,8 +914,8 @@ def registerEvent(request):
                     setData['$set'] = {}
                     setData['$set']['participants'] = event[0]['participants']
                     MongoMobileApp.updateOne('events', event_filter, setData)
-                    sendEmail(body)
-                    return Response("Candidate already registered with details. Event successfully registered")
+                    response = sendEmail(body)
+                    return Response("Candidate already registered with details. Event successfully registered." + response)
                 except Exception as error:
                     if body['eventId'] in record[0]['events']:
                         index = record[0]['events'].index(body['eventId'])
@@ -885,7 +941,7 @@ def registerEvent(request):
                     print(f"Event ID {body['eventId']} not found in the list.")
                     return Response("Internal Server Error : "+str(error))
         else:
-            return Response("Candidate already registered with details. Event is already registered")
+            return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
     else:
         print("new candidate")
         current_date = datetime.today().strftime('%y%m')  # Format: YYMM
@@ -893,15 +949,19 @@ def registerEvent(request):
         rollNumber = current_date + str(len(allRecords)+1)
         body['rollNumber'] = rollNumber
         body['events'].append(body['eventId'])
+        body['eventHistory'].append({
+            'eventId' : body['eventId'],
+            'eventName' : body['eventName'],
+            'age' : body['age']
+        })
 
         base64_data = body['images']['profilePhoto'][0]['imageFile']['img']
         original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
         unique_filename = generate_unique_filename(original_filename)
         content_type = "application/octet-stream"
-        s3_key = f"uploads/{unique_filename}"
+        s3_key = f"uploads/candidates/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{body['name']}/{unique_filename}"
 
         file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-        print(file_url)
 
         body['images']['profilePhoto'][0]['imageFile']['img'] = file_url
 
@@ -915,8 +975,8 @@ def registerEvent(request):
             setData['$set'] = {}
             setData['$set']['participants'] = event[0]['participants']
             MongoMobileApp.updateOne('events', event_filter, setData)
-            sendEmail(body)
-            return Response("New Candidate Registered. Event successfully registered")
+            response = sendEmail(body)
+            return Response("New Candidate Registered. Event successfully registered. " + response)
         else:
             return Response("Error Occurred")
 
@@ -938,8 +998,87 @@ def deleteEvent(request):
     if 'payloadId' in params:
         filter['_id'] = ObjectId(params['payloadId'])
     MongoMobileApp.deleteMany('events', filter)
-    return Response("Deleted")
+    return Response("Event successfully Deleted")
 
+@api_view(['DELETE'])
+def deleteCandidate(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+    params = request.query_params
+    filter = {}
+    if 'candidateId' in params:
+        filter['_id'] = ObjectId(params['candidateId'])
+    result = MongoMobileApp.deleteMany('participants', filter)
+    if result == 1:
+        records = MongoMobileApp.find('events', {})
+        i = 0
+        while i<len(records):
+            participants = records[i]['participants']
+            if params['candidateId'] in participants:
+                participants.remove(params['candidateId'])
+                setData = {}
+                setData['$set'] = {}
+                setData['$set']['participants'] = participants
+                filter2={}
+                filter2['_id'] = ObjectId(records[i]['_id'])
+                result = MongoMobileApp.updateOne('events', filter2, setData)
+            i = i+1
+        return Response("Candidate permanently deleted from database")
+
+@api_view(['DELETE'])
+def removeCandidate(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+    params = request.query_params
+    filter = {}
+    if 'eventId' in params:
+        filter['_id'] = ObjectId(params['eventId'])
+    
+    record = MongoMobileApp.find('events', filter)
+    if isinstance(record, list) and len(record)>0:
+        if 'candidateId' in params:
+            participants = record[0]['participants']
+            if params['candidateId'] in participants:
+                participants.remove(params['candidateId'])
+                setData = {}
+                setData['$set'] = {}
+                setData['$set']['participants'] = participants
+                result = MongoMobileApp.updateOne('events', filter, setData)
+
+                if result == 1:
+                    filter2 = {}
+                    filter2['_id'] = ObjectId(params['candidateId'])
+                    record2 = MongoMobileApp.find('participants', filter2) 
+                    if isinstance(record2, list) and len(record2)>0:
+                        if 'eventId' in params:
+                            events = record2[0]['events']
+                            if params['eventId'] in events:
+                                events.remove(params['eventId'])
+                                filter3 = {}
+                                setData = {}
+                                setData['$set'] = {}
+                                setData['$set']['events'] = events
+                                MongoMobileApp.updateOne('participants', filter2, setData)  
+                                return Response("Candidate Removed from the event")
+    
 
 # Custom JSON serializer for MongoDB's ObjectId
 def json_converter(o):
@@ -947,63 +1086,123 @@ def json_converter(o):
         return str(o)  # Convert ObjectId to string
     raise TypeError(f"Type {o} not serializable")
 
-def sendEmail(body):
-    sendgrid_api_key = "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"
-    sender_email = "web.ggssc.canada@gmail.com"
-    recipient_email = body['email']
-    subject = "GGSSC - Registration successful "
-    emailBody = "Thank you for registration " + "\n\n"
+# def sendEmail(body):
+#     sendgrid_api_key = "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"
+#     sender_email = "web.ggssc.canada@gmail.com"
+#     recipient_email = body['email']
+#     subject = "GGSSC - Registration successful "
+#     emailBody = "Thank you for registration " + "\n\n"
 
-    emailBody += "The details are as follows :\n\n"
+#     emailBody += "The details are as follows :\n\n"
     
-    emailBody += "Roll Number : " + body['rollNumber'] + "\n"
-    emailBody += "Name : " + body['name'] + "\n"
-    emailBody += "Event name : " + body['eventName']  + "\n"
-    emailBody += "Location : " + body['location']  + "\n\n"
+#     emailBody += "Roll Number : " + body['rollNumber'] + "\n"
+#     emailBody += "Name : " + body['name'] + "\n"
+#     emailBody += "Event name : " + body['eventName']  + "\n"
+#     emailBody += "Location : " + body['location']  + "\n\n"
 
-    emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh" + "\n"
+#     emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh" + "\n"
+#     emailBody += "GGSSC Canada"
+
+#     try:
+#         # Create the email content
+#         message = Mail(
+#             from_email=sender_email,
+#             to_emails=recipient_email,
+#             subject=subject,
+#             plain_text_content=emailBody
+#         )
+#         # Initialize the SendGrid client
+#         sg = SendGridAPIClient(sendgrid_api_key)
+#         response = sg.client.api_keys.get()
+#         # Send the email
+#         response = sg.send(message)
+#         print(f"Email sent successfully! Status code: {response.status_code}")
+#     except Exception as e:
+#         print(f"Failed to send email: {e}")
+
+# def sendOtpEmail(random_number,email):
+#     sendgrid_api_key = "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"
+#     sender_email = "web.ggssc.canada@gmail.com"
+#     recipient_email = email
+#     subject = "GGSSC verification code"
+#     emailBody = "Registration Verification code is " + str(random_number)
+
+#     try:
+#         # Create the email content
+#         message = Mail(
+#             from_email=sender_email,
+#             to_emails=recipient_email,
+#             subject=subject,
+#             plain_text_content=emailBody
+#         )
+#         # Initialize the SendGrid client
+#         sg = SendGridAPIClient(sendgrid_api_key)
+#         response = sg.client.api_keys.get()
+#         # Send the email
+#         response = sg.send(message)
+#         print(f"Email sent successfully! Status code: {response.status_code}")
+#         return "Email sent successfully to " + email
+#     except Exception as e:
+#         print(f"Failed to send email: {e}")
+#         return "Failed to send email : " + str(e)
+
+def sendOtpEmail(random_number, recipient_email):
+    sender_email = "web.ggssc.canada@gmail.com"
+    app_password = "wmxultabswjgerzf"  # not your Gmail login password
+
+    subject = "GGSSC verification code"
+    body = f"Registration Verification code is {random_number}"
+
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+        print(f"Email sent successfully to {recipient_email}")
+        return f"Email sent successfully to {recipient_email}"
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return "Failed to send email: " + str(e)
+
+def sendEmail(body):
+    sender_email = "web.ggssc.canada@gmail.com"
+    app_password = "wmxultabswjgerzf"  # Replace with your actual App Password
+    recipient_email = body['email']
+    subject = "GGSSC - Registration successful"
+
+    # Construct the email body text
+    emailBody = "Thank you for registration \n\n"
+    emailBody += "The details are as follows :\n\n"
+    emailBody += "Roll Number : " + body.get('rollNumber', '') + "\n"
+    emailBody += "Name : " + body.get('name', '') + "\n"
+    emailBody += "Event name : " + body.get('eventName', '') + "\n"
+    emailBody += "Location : " + body.get('location', '') + "\n\n"
+    emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh\n"
     emailBody += "GGSSC Canada"
 
-    try:
-        # Create the email content
-        message = Mail(
-            from_email=sender_email,
-            to_emails=recipient_email,
-            subject=subject,
-            plain_text_content=emailBody
-        )
-        # Initialize the SendGrid client
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.client.api_keys.get()
-        # Send the email
-        response = sg.send(message)
-        print(f"Email sent successfully! Status code: {response.status_code}")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-
-def sendOtpEmail(random_number,email):
-    sendgrid_api_key = "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"
-    sender_email = "web.ggssc.canada@gmail.com"
-    recipient_email = email
-    subject = "GGSSC verification code"
-    emailBody = "Registration Verification code is " + str(random_number)
+    # Prepare email message
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(emailBody, "plain"))
 
     try:
-        # Create the email content
-        message = Mail(
-            from_email=sender_email,
-            to_emails=recipient_email,
-            subject=subject,
-            plain_text_content=emailBody
-        )
-        # Initialize the SendGrid client
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.client.api_keys.get()
-        # Send the email
-        response = sg.send(message)
-        print(f"Email sent successfully! Status code: {response.status_code}")
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+        print(f"Email sent successfully to {recipient_email}")
+        return f"Email sent successfully to {recipient_email}"
     except Exception as e:
         print(f"Failed to send email: {e}")
+        return "Failed to send email: " + str(e)
 
 def calculate_age(iso_date_str: str) -> int:
     birth_date = datetime.strptime(iso_date_str, "%Y-%m-%d")  # Convert to datetime object
@@ -1059,7 +1258,6 @@ def upload_base64_to_s3(base64_data, s3_key, content_type='application/octet-str
     return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
 
 def generate_unique_filename(original_filename):
-    filename = os.path.splitext(original_filename)[0]
     ext = os.path.splitext(original_filename)[1]  # get .jpg, .png etc.
     unique_id = uuid.uuid4().hex  # or use datetime.now().strftime("%Y%m%d%H%M%S")
-    return f"{unique_id}_{filename}{ext}"
+    return f"{unique_id}{ext}"
