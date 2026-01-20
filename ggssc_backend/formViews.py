@@ -264,10 +264,18 @@ class registerModel:
             result['email'] = params['email']
         else:
             result['email'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
         if 'phoneNumber' in params:
             result['phoneNumber'] = params['phoneNumber']
         else:
             result['phoneNumber'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -303,8 +311,13 @@ class registerModel:
         if 'comments' in params:
             result['comments'] = params['comments']
         else:
-            result['comments'] = ""
+            result['comments'] = ""  
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
         result['events'] = []
+        result['eventHistory'] = []
         return result
 
     def fromdb(params):
@@ -333,10 +346,18 @@ class registerModel:
             result['email'] = params['email']
         else:
             result['email'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
         if 'phoneNumber' in params:
             result['phoneNumber'] = params['phoneNumber']
         else:
             result['phoneNumber'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
         if 'images' in params:
             result['images'] = params['images']
         else:
@@ -361,6 +382,10 @@ class registerModel:
             result['age'] = params['age']
         else:
             result['age'] = ""
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
         return result
 
 class candidateModel:
@@ -801,66 +826,66 @@ def registerEvent(request):
         except Exception as error:
             return Response("Internal Server Error")
 
-    email_Filter = {}
-    email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
-    record = MongoMobileApp.find('participants', email_Filter)
-    if isinstance(record, list) and len(record)>0:
-        msg = "From email"
-        print(msg)
-        if body['eventId'] not in record[0]['events']:
-            body['rollNumber'] = record[0]['rollNumber'] 
-            record[0]['events'].append(body['eventId'])
-            setData = {}
-            setData['$set'] = {}
-            setData['$set']['events'] = record[0]['events']
-            setData['$set']['age'] = body['age']
-            MongoMobileApp.updateOne('participants', email_Filter, setData)
-            event_filter = {}
-            event_filter['_id'] = ObjectId(body['eventId'])
-            event = MongoMobileApp.find('events', event_filter)
-            if isinstance(event, list) and len(event)>0:
-                try:
-                    event[0]['participants'].append(str(record[0]['_id']))
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['participants'] = event[0]['participants']
-                    MongoMobileApp.updateOne('events', event_filter, setData)
-                    response = sendEmail(body)
-                    return Response("Candidate already registered with email. Event successfully registered. " + response)
-                except Exception as error:
-                    if body['eventId'] in record[0]['events']:
-                        index = record[0]['events'].index(body['eventId'])
-                        record[0]['events'].pop(index)
-                        setData = {}
-                        setData['$set'] = {}
-                        setData['$set']['events'] = record[0]['events']
-                        MongoMobileApp.updateOne('participants', email_Filter, setData)
-                        return Response("Internal Server Error related to data update")
-                    else:
-                        print(f"Event ID {body['eventId']} not found in the list.")
-                        return Response("Internal Server Error : "+str(error))
-            else:
-                if body['eventId'] in record[0]['events']:
-                    index = record[0]['events'].index(body['eventId'])
-                    record[0]['events'].pop(index)
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['events'] = record[0]['events']
-                    MongoMobileApp.updateOne('participants', email_Filter, setData)
-                    return Response("Internal Server Error related to data update")
-                else:
-                    print(f"Event ID {body['eventId']} not found in the list.")
-                    return Response("Internal Server Error : "+str(error))
-        else:
-            return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
-    else:
-        pass
+    # email_Filter = {}
+    # email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
+    # record = MongoMobileApp.find('participants', email_Filter)
+    # if isinstance(record, list) and len(record)>0:
+    #     msg = "From email"
+    #     print(msg)
+    #     if body['eventId'] not in record[0]['events']:
+    #         body['rollNumber'] = record[0]['rollNumber'] 
+    #         record[0]['events'].append(body['eventId'])
+    #         setData = {}
+    #         setData['$set'] = {}
+    #         setData['$set']['events'] = record[0]['events']
+    #         setData['$set']['age'] = body['age']
+    #         MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #         event_filter = {}
+    #         event_filter['_id'] = ObjectId(body['eventId'])
+    #         event = MongoMobileApp.find('events', event_filter)
+    #         if isinstance(event, list) and len(event)>0:
+    #             try:
+    #                 event[0]['participants'].append(str(record[0]['_id']))
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['participants'] = event[0]['participants']
+    #                 MongoMobileApp.updateOne('events', event_filter, setData)
+    #                 response = sendEmail(body)
+    #                 return Response("Candidate already registered with email. Event successfully registered. " + response)
+    #             except Exception as error:
+    #                 if body['eventId'] in record[0]['events']:
+    #                     index = record[0]['events'].index(body['eventId'])
+    #                     record[0]['events'].pop(index)
+    #                     setData = {}
+    #                     setData['$set'] = {}
+    #                     setData['$set']['events'] = record[0]['events']
+    #                     MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #                     return Response("Internal Server Error related to data update")
+    #                 else:
+    #                     print(f"Event ID {body['eventId']} not found in the list.")
+    #                     return Response("Internal Server Error : "+str(error))
+    #         else:
+    #             if body['eventId'] in record[0]['events']:
+    #                 index = record[0]['events'].index(body['eventId'])
+    #                 record[0]['events'].pop(index)
+    #                 setData = {}
+    #                 setData['$set'] = {}
+    #                 setData['$set']['events'] = record[0]['events']
+    #                 MongoMobileApp.updateOne('participants', email_Filter, setData)
+    #                 return Response("Internal Server Error related to data update")
+    #             else:
+    #                 print(f"Event ID {body['eventId']} not found in the list.")
+    #                 return Response("Internal Server Error : "+str(error))
+    #     else:
+    #         return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
+    # else:
+    #     pass
 
     filter = {}
     filter['name'] = {'$regex': f"^{body['name']}$", '$options': 'i'}
     filter['dateOfBirth'] = body['dateOfBirth']
-    filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
-    filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
+    # filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
+    # filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
     record = MongoMobileApp.find('participants', filter)
     if isinstance(record, list) and len(record)>0:
         msg = "From details"
@@ -868,9 +893,15 @@ def registerEvent(request):
         if body['eventId'] not in record[0]['events']:
             body['rollNumber'] = record[0]['rollNumber'] 
             record[0]['events'].append(body['eventId'])
+            record[0]['eventHistory'].append({
+                'eventId' : body['eventId'],
+                'eventName' : body['eventName'],
+                'age' : body['age']
+            })
             setData = {}
             setData['$set'] = {}
             setData['$set']['events'] = record[0]['events']
+            setData['$set']['eventHistory'] = record[0]['eventHistory']
             setData['$set']['age'] = body['age']
             MongoMobileApp.updateOne('participants', filter, setData)
             event_filter = {}
@@ -918,6 +949,11 @@ def registerEvent(request):
         rollNumber = current_date + str(len(allRecords)+1)
         body['rollNumber'] = rollNumber
         body['events'].append(body['eventId'])
+        body['eventHistory'].append({
+            'eventId' : body['eventId'],
+            'eventName' : body['eventName'],
+            'age' : body['age']
+        })
 
         base64_data = body['images']['profilePhoto'][0]['imageFile']['img']
         original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
