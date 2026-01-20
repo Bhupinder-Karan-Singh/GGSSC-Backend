@@ -32,7 +32,7 @@ class MobileUser:
             try:
                 filter = {}
                 filter['email'] = decodedToken['email']
-                user = MongoMobileApp.find('users', filter)
+                user = MongoMobileApp.find('admin', filter)
                 if isinstance(user, list) and len(user)>0:
                     user = user[0]
                     retval['isExpired'] = False
