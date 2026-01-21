@@ -316,6 +316,22 @@ class registerModel:
             result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
         else:
             result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
         result['events'] = []
         result['eventHistory'] = []
         return result
@@ -386,6 +402,22 @@ class registerModel:
             result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
         else:
             result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
         return result
 
 class candidateModel:
