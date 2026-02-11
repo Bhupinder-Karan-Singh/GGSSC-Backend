@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h(5!@@t*ci#(t$f1ad0q+$*_nm6#f)j3!3=24ege#kug0@=or@'
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -88,13 +88,13 @@ WSGI_APPLICATION = 'ggssc.wsgi.application'
 # }
 
 MONGOMOBILEAPP = {
-    'host': "cluster0",
+    'host': "",
     # 'host': "localhost",
-    'port': "27017",
-    'dbname': "ggsscca",
+    'port': "",
+    'dbname': "",
     'authentication': "true",
-    'username': "ggssc",
-    'password': "1234",
+    'username': "",
+    'password': "",
 }
 
 
@@ -139,8 +139,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AWS_ACCESS_KEY_ID = 'AKIA3CMCCYLWV43EER7U'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_STORAGE_BUCKET_NAME = 'ggssc-bucket'
-AWS_S3_REGION_NAME = 'ca-central-1'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_STORAGE_BUCKET_NAME = ''
+AWS_S3_REGION_NAME = ''
+AWS_S3_CUSTOM_DOMAIN = ''

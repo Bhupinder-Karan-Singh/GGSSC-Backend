@@ -11,7 +11,6 @@ class MongoMobileApp:
         self.logger = logging.getLogger("Mongo Connection")
         if self.__instance == None:
             self.__mongoConfig = settings.MONGOMOBILEAPP 
-            #client = pymongo.MongoClient("mongodb://ranDBAdmin:testserver81@172.25.220.81/ranDB?authSource=admin")
             if self.__mongoConfig['authentication'] == 'True' or self.__mongoConfig['authentication'] == 'true' or self.__mongoConfig['authentication'] == True:
                 baseString = "mongodb+srv://"+ self.__mongoConfig['username']+ ":"+ self.__mongoConfig['password']+"@cluster0.xebhn.mongodb.net/"
                 connectionString = baseString
