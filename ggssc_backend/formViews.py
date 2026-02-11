@@ -1151,7 +1151,7 @@ def json_converter(o):
     raise TypeError(f"Type {o} not serializable")
 
 # def sendEmail(body):
-#     sendgrid_api_key = "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"
+#     sendgrid_api_key = ""
 #     sender_email = "web.ggssc.canada@gmail.com"
 #     recipient_email = body['email']
 #     subject = "GGSSC - Registration successful "
@@ -1185,7 +1185,7 @@ def json_converter(o):
 #         print(f"Failed to send email: {e}")
 
 # def sendOtpEmail(random_number,email):
-#     sendgrid_api_key = "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"
+#     sendgrid_api_key = ""
 #     sender_email = "web.ggssc.canada@gmail.com"
 #     recipient_email = email
 #     subject = "GGSSC verification code"
