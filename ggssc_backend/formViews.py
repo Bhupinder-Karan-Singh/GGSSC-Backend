@@ -316,6 +316,22 @@ class registerModel:
             result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
         else:
             result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
         result['events'] = []
         result['eventHistory'] = []
         return result
@@ -386,6 +402,22 @@ class registerModel:
             result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
         else:
             result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
         return result
 
 class candidateModel:
@@ -459,6 +491,38 @@ class candidateModel:
             result['comments'] = params['comments']
         else:
             result['comments'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
+        if 'eventHistory' in params:
+            result['eventHistory'] = params['eventHistory']
+        else:
+            result['condieventHistorytions'] = ""
         return result
 
     def todb(params):
@@ -1087,7 +1151,7 @@ def json_converter(o):
     raise TypeError(f"Type {o} not serializable")
 
 # def sendEmail(body):
-#     sendgrid_api_key = "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"
+#     sendgrid_api_key = ""
 #     sender_email = "web.ggssc.canada@gmail.com"
 #     recipient_email = body['email']
 #     subject = "GGSSC - Registration successful "
@@ -1121,7 +1185,7 @@ def json_converter(o):
 #         print(f"Failed to send email: {e}")
 
 # def sendOtpEmail(random_number,email):
-#     sendgrid_api_key = "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"
+#     sendgrid_api_key = ""
 #     sender_email = "web.ggssc.canada@gmail.com"
 #     recipient_email = email
 #     subject = "GGSSC verification code"
