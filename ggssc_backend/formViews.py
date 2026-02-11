@@ -491,6 +491,38 @@ class candidateModel:
             result['comments'] = params['comments']
         else:
             result['comments'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
+        if 'eventHistory' in params:
+            result['eventHistory'] = params['eventHistory']
+        else:
+            result['condieventHistorytions'] = ""
         return result
 
     def todb(params):
