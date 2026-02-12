@@ -20,7 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -87,15 +86,7 @@ WSGI_APPLICATION = 'ggssc.wsgi.application'
 #     }
 # }
 
-MONGOMOBILEAPP = {
-    'host': "",
-    # 'host': "localhost",
-    'port': "",
-    'dbname': "",
-    'authentication': "true",
-    'username': "",
-    'password': "",
-}
+
 
 
 # Password validation
@@ -139,8 +130,3 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
-AWS_STORAGE_BUCKET_NAME = ''
-AWS_S3_REGION_NAME = ''
-AWS_S3_CUSTOM_DOMAIN = ''
