@@ -1102,7 +1102,7 @@ def json_converter(o):
 
 def sendOtpEmail(random_number, recipient_email):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = "wmxultabswjgerzf"  # not your Gmail login password
+    app_password = ""  # not your Gmail login password
 
     subject = "Evently verification code"
     body = f"Registration Verification code is {random_number}"
@@ -1126,7 +1126,7 @@ def sendOtpEmail(random_number, recipient_email):
 
 def sendEmail(body):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = "wmxultabswjgerzf"  # Replace with your actual App Password
+    app_password = ""  # Replace with your actual App Password
     recipient_email = body['email']
     subject = "Evently - Registration successful"
 
