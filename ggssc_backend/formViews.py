@@ -873,176 +873,126 @@ def verifyOtp(request):
 
 @api_view(['POST'])
 def registerEvent(request):
-    systemCheck()
-    body = json.loads(request.body.decode('utf-8'))
-    body = registerModel.todb(body)
-    event_filter = {}
-    event_filter['_id'] = ObjectId(body['eventId'])
-    event = MongoMobileApp.find('events', event_filter)
-    if isinstance(event, list) and len(event)>0:
+    try:
+        systemCheck()
+        body = registerModel.todb(json.loads(request.body.decode('utf-8')))
+        event_id = body.get('eventId')
+
+        if not event_id:
+            return Response("Event ID missing")
+
+        # Fetch & Validate Event (Single Query)
+        event_filter = {'_id': ObjectId(event_id)}
+        event_list = MongoMobileApp.find('events', event_filter)
+
+        if not event_list:
+            return Response("Event not found")
+
+        event = event_list[0]
+
+        if event.get('status') != "Active":
+            return Response("Event disabled. Contact Administrator")
+
         try:
-            if event[0]['status'] != "Active":
-                return Response("Event disbaled. Contact Administartor")
-            elif datetime.strptime(event[0]['endTime'], "%d %b %Y").date() < datetime.today().date():
+            event_end = datetime.strptime(event['endTime'], "%d %b %Y").date()
+            if event_end < datetime.today().date():
                 return Response("Unfortunately the event is closed.")
-            else:
-                pass
-        except Exception as error:
-            return Response("Internal Server Error")
+        except:
+            return Response("Invalid event date format")
+        # Check if Participant Exists
+        participant_filter = {
+            'normalizedName': {'$regex': f"^{normalize_name(body['name'])}$", '$options': 'i'},
+            'dateOfBirth': body['dateOfBirth']
+        }
+        participant_list = MongoMobileApp.find('participants', participant_filter)
 
-    # email_Filter = {}
-    # email_Filter['email'] = {'$regex': f"^{body['email']}$", '$options': 'i'}
-    # record = MongoMobileApp.find('participants', email_Filter)
-    # if isinstance(record, list) and len(record)>0:
-    #     msg = "From email"
-    #     print(msg)
-    #     if body['eventId'] not in record[0]['events']:
-    #         body['rollNumber'] = record[0]['rollNumber'] 
-    #         record[0]['events'].append(body['eventId'])
-    #         setData = {}
-    #         setData['$set'] = {}
-    #         setData['$set']['events'] = record[0]['events']
-    #         setData['$set']['age'] = body['age']
-    #         MongoMobileApp.updateOne('participants', email_Filter, setData)
-    #         event_filter = {}
-    #         event_filter['_id'] = ObjectId(body['eventId'])
-    #         event = MongoMobileApp.find('events', event_filter)
-    #         if isinstance(event, list) and len(event)>0:
-    #             try:
-    #                 event[0]['participants'].append(str(record[0]['_id']))
-    #                 setData = {}
-    #                 setData['$set'] = {}
-    #                 setData['$set']['participants'] = event[0]['participants']
-    #                 MongoMobileApp.updateOne('events', event_filter, setData)
-    #                 response = sendEmail(body)
-    #                 return Response("Candidate already registered with email. Event successfully registered. " + response)
-    #             except Exception as error:
-    #                 if body['eventId'] in record[0]['events']:
-    #                     index = record[0]['events'].index(body['eventId'])
-    #                     record[0]['events'].pop(index)
-    #                     setData = {}
-    #                     setData['$set'] = {}
-    #                     setData['$set']['events'] = record[0]['events']
-    #                     MongoMobileApp.updateOne('participants', email_Filter, setData)
-    #                     return Response("Internal Server Error related to data update")
-    #                 else:
-    #                     print(f"Event ID {body['eventId']} not found in the list.")
-    #                     return Response("Internal Server Error : "+str(error))
-    #         else:
-    #             if body['eventId'] in record[0]['events']:
-    #                 index = record[0]['events'].index(body['eventId'])
-    #                 record[0]['events'].pop(index)
-    #                 setData = {}
-    #                 setData['$set'] = {}
-    #                 setData['$set']['events'] = record[0]['events']
-    #                 MongoMobileApp.updateOne('participants', email_Filter, setData)
-    #                 return Response("Internal Server Error related to data update")
-    #             else:
-    #                 print(f"Event ID {body['eventId']} not found in the list.")
-    #                 return Response("Internal Server Error : "+str(error))
-    #     else:
-    #         return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
-    # else:
-    #     pass
+        # EXISTING PARTICIPANT
+        if participant_list:
+            participant = participant_list[0]
+            if event_id in participant.get('events', []):
+                return Response("Candidate already registered for this event.")
+            
+            # Atomic update
+            MongoMobileApp.updateOne(
+                'participants',
+                participant_filter,
+                {
+                    '$push': {
+                        'events': event_id,
+                        'eventHistory': {
+                            'eventId': event_id,
+                            'eventName': body['eventName'],
+                            'age': body['age']
+                        }
+                    },
+                    '$set': {'age': body['age']}
+                }
+            )
 
-    filter = {}
-    filter['name'] = {'$regex': f"^{body['name']}$", '$options': 'i'}
-    filter['dateOfBirth'] = body['dateOfBirth']
-    # filter['fatherName'] = {'$regex': f"^{body['fatherName']}$", '$options': 'i'}
-    # filter['motherName'] = {'$regex': f"^{body['motherName']}$", '$options': 'i'}
-    record = MongoMobileApp.find('participants', filter)
-    if isinstance(record, list) and len(record)>0:
-        msg = "From details"
-        print(msg)
-        if body['eventId'] not in record[0]['events']:
-            body['rollNumber'] = record[0]['rollNumber'] 
-            record[0]['events'].append(body['eventId'])
-            record[0]['eventHistory'].append({
-                'eventId' : body['eventId'],
-                'eventName' : body['eventName'],
-                'age' : body['age']
-            })
-            setData = {}
-            setData['$set'] = {}
-            setData['$set']['events'] = record[0]['events']
-            setData['$set']['eventHistory'] = record[0]['eventHistory']
-            setData['$set']['age'] = body['age']
-            MongoMobileApp.updateOne('participants', filter, setData)
-            event_filter = {}
-            event_filter['_id'] = ObjectId(body['eventId'])
-            event = MongoMobileApp.find('events', event_filter)
-            if isinstance(event, list) and len(event)>0:
-                try:
-                    event[0]['participants'].append(str(record[0]['_id']))
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['participants'] = event[0]['participants']
-                    MongoMobileApp.updateOne('events', event_filter, setData)
-                    response = sendEmail(body)
-                    return Response("Candidate already registered with details. Event successfully registered." + response)
-                except Exception as error:
-                    if body['eventId'] in record[0]['events']:
-                        index = record[0]['events'].index(body['eventId'])
-                        record[0]['events'].pop(index)
-                        setData = {}
-                        setData['$set'] = {}
-                        setData['$set']['events'] = record[0]['events']
-                        MongoMobileApp.updateOne('participants', filter, setData)
-                        return Response("Internal Server Error related to data update")
-                    else:
-                        print(f"Event ID {body['eventId']} not found in the list.")
-                        return Response("Internal Server Error : "+str(error))
-            else:
-                if body['eventId'] in record[0]['events']:
-                    index = record[0]['events'].index(body['eventId'])
-                    record[0]['events'].pop(index)
-                    setData = {}
-                    setData['$set'] = {}
-                    setData['$set']['events'] = record[0]['events']
-                    MongoMobileApp.updateOne('participants', filter, setData)
-                    return Response("Internal Server Error related to data upadte")
-                else:
-                    print(f"Event ID {body['eventId']} not found in the list.")
-                    return Response("Internal Server Error : "+str(error))
-        else:
-            return Response("Candidate and Event already registered. Contact admin if you have any concerns !!!")
-    else:
-        print("new candidate")
-        current_date = datetime.today().strftime('%y%m')  # Format: YYMM
-        allRecords = MongoMobileApp.find('participants', {})
-        rollNumber = current_date + str(len(allRecords)+1)
-        body['rollNumber'] = rollNumber
-        body['events'].append(body['eventId'])
-        body['eventHistory'].append({
-            'eventId' : body['eventId'],
-            'eventName' : body['eventName'],
-            'age' : body['age']
-        })
-
-        base64_data = body['images']['profilePhoto'][0]['imageFile']['img']
-        original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
-        unique_filename = generate_unique_filename(original_filename)
-        content_type = "application/octet-stream"
-        s3_key = f"uploads/candidates/{datetime.now().year}/{datetime.now().month}/{body['eventName']}/{body['name']}/{unique_filename}"
-
-        file_url = upload_base64_to_s3(base64_data, s3_key, content_type)
-
-        body['images']['profilePhoto'][0]['imageFile']['img'] = file_url
-
-        record = MongoMobileApp.createOne('participants', body)
-        event_filter = {}
-        event_filter['_id'] = ObjectId(body['eventId'])
-        event = MongoMobileApp.find('events', event_filter)
-        if isinstance(event, list) and len(event)>0:
-            event[0]['participants'].append(str(record))
-            setData = {}
-            setData['$set'] = {}
-            setData['$set']['participants'] = event[0]['participants']
-            MongoMobileApp.updateOne('events', event_filter, setData)
+            # Add participant to event safely
+            MongoMobileApp.updateOne(
+                'events',
+                event_filter,
+                {'$addToSet': {'participants': str(participant['_id'])}}
+            )
             response = sendEmail(body)
-            return Response("New Candidate Registered. Event successfully registered. " + response)
-        else:
-            return Response("Error Occurred")
+            return Response("Event successfully registered. " + response)
+
+        # NEW PARTICIPANT
+        current_date = datetime.today().strftime('%y%m')
+        all_records = MongoMobileApp.find('participants', {})
+        roll_number = current_date + str(len(all_records) + 1)
+
+        body['rollNumber'] = roll_number
+        body['events'] = [event_id]
+        body['eventHistory'] = [{
+            'eventId': event_id,
+            'eventName': body['eventName'],
+            'age': body['age']
+        }]
+        body['normalizedName'] = normalize_name(body['name'])
+
+        # Upload Profile Image to S3
+        try:
+            base64_data = body['images']['profilePhoto'][0]['imageFile']['img']
+            original_filename = body['images']['profilePhoto'][0]['imageFile']['title']
+
+            unique_filename = generate_unique_filename(original_filename)
+            s3_key = (
+                f"uploads/candidates/"
+                f"{datetime.now().year}/"
+                f"{datetime.now().month}/"
+                f"{body['eventName']}/"
+                f"{body['name']}/"
+                f"{unique_filename}"
+            )
+
+            file_url = upload_base64_to_s3(
+                base64_data,
+                s3_key,
+                "application/octet-stream"
+            )
+
+            body['images']['profilePhoto'][0]['imageFile']['img'] = file_url
+
+        except Exception as e:
+            return Response("Image upload failed")
+
+        # Insert New Participant
+        new_participant_id = MongoMobileApp.createOne('participants', body)
+
+        # Add to event
+        MongoMobileApp.updateOne(
+            'events',
+            event_filter,
+            {'$addToSet': {'participants': str(new_participant_id)}}
+        )
+
+        response = sendEmail(body)
+        return Response("New Candidate Registered. Event successfully registered. " + response)
+
+    except Exception as e:
+        return Response(f"Internal Server Error: {str(e)}")
 
 @api_view(['DELETE'])
 def deleteEvent(request):
@@ -1150,71 +1100,11 @@ def json_converter(o):
         return str(o)  # Convert ObjectId to string
     raise TypeError(f"Type {o} not serializable")
 
-# def sendEmail(body):
-#     sendgrid_api_key = ""
-#     sender_email = "web.ggssc.canada@gmail.com"
-#     recipient_email = body['email']
-#     subject = "GGSSC - Registration successful "
-#     emailBody = "Thank you for registration " + "\n\n"
-
-#     emailBody += "The details are as follows :\n\n"
-    
-#     emailBody += "Roll Number : " + body['rollNumber'] + "\n"
-#     emailBody += "Name : " + body['name'] + "\n"
-#     emailBody += "Event name : " + body['eventName']  + "\n"
-#     emailBody += "Location : " + body['location']  + "\n\n"
-
-#     emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh" + "\n"
-#     emailBody += "GGSSC Canada"
-
-#     try:
-#         # Create the email content
-#         message = Mail(
-#             from_email=sender_email,
-#             to_emails=recipient_email,
-#             subject=subject,
-#             plain_text_content=emailBody
-#         )
-#         # Initialize the SendGrid client
-#         sg = SendGridAPIClient(sendgrid_api_key)
-#         response = sg.client.api_keys.get()
-#         # Send the email
-#         response = sg.send(message)
-#         print(f"Email sent successfully! Status code: {response.status_code}")
-#     except Exception as e:
-#         print(f"Failed to send email: {e}")
-
-# def sendOtpEmail(random_number,email):
-#     sendgrid_api_key = ""
-#     sender_email = "web.ggssc.canada@gmail.com"
-#     recipient_email = email
-#     subject = "GGSSC verification code"
-#     emailBody = "Registration Verification code is " + str(random_number)
-
-#     try:
-#         # Create the email content
-#         message = Mail(
-#             from_email=sender_email,
-#             to_emails=recipient_email,
-#             subject=subject,
-#             plain_text_content=emailBody
-#         )
-#         # Initialize the SendGrid client
-#         sg = SendGridAPIClient(sendgrid_api_key)
-#         response = sg.client.api_keys.get()
-#         # Send the email
-#         response = sg.send(message)
-#         print(f"Email sent successfully! Status code: {response.status_code}")
-#         return "Email sent successfully to " + email
-#     except Exception as e:
-#         print(f"Failed to send email: {e}")
-#         return "Failed to send email : " + str(e)
-
 def sendOtpEmail(random_number, recipient_email):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = ""  # not your Gmail login password
+    app_password = "wmxultabswjgerzf"  # not your Gmail login password
 
-    subject = "GGSSC verification code"
+    subject = "Evently verification code"
     body = f"Registration Verification code is {random_number}"
 
     msg = MIMEMultipart()
@@ -1236,9 +1126,9 @@ def sendOtpEmail(random_number, recipient_email):
 
 def sendEmail(body):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = ""  # Replace with your actual App Password
+    app_password = "wmxultabswjgerzf"  # Replace with your actual App Password
     recipient_email = body['email']
-    subject = "GGSSC - Registration successful"
+    subject = "Evently - Registration successful"
 
     # Construct the email body text
     emailBody = "Thank you for registration \n\n"
@@ -1247,8 +1137,8 @@ def sendEmail(body):
     emailBody += "Name : " + body.get('name', '') + "\n"
     emailBody += "Event name : " + body.get('eventName', '') + "\n"
     emailBody += "Location : " + body.get('location', '') + "\n\n"
-    emailBody += "Waheguru ji ka khalsa waheguru ji ki fateh\n"
-    emailBody += "GGSSC Canada"
+    emailBody += "Regards\n"
+    emailBody += "Evently Canada"
 
     # Prepare email message
     msg = MIMEMultipart()
@@ -1325,3 +1215,6 @@ def generate_unique_filename(original_filename):
     ext = os.path.splitext(original_filename)[1]  # get .jpg, .png etc.
     unique_id = uuid.uuid4().hex  # or use datetime.now().strftime("%Y%m%d%H%M%S")
     return f"{unique_id}{ext}"
+
+def normalize_name(name):
+    return ''.join(name.lower().split())
