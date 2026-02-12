@@ -1236,7 +1236,7 @@ def sendOtpEmail(random_number, recipient_email):
 
 def sendEmail(body):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = "wmxultabswjgerzf"  # Replace with your actual App Password
+    app_password = ""  # Replace with your actual App Password
     recipient_email = body['email']
     subject = "GGSSC - Registration successful"
 
