@@ -17,6 +17,7 @@ urlpatterns = [
     path('sendOtp',formViews.sendOtp),
     path('verifyOtp',formViews.verifyOtp),
     path('getAllCandidates',formViews.getAllCandidates),
+    path('getAllDuplicates',formViews.getAllDuplicates),
     path('saveCandidate',formViews.saveCandidate),
     path('getCandidatesList',formViews.getCandidatesList),
 ]

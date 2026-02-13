@@ -24,6 +24,8 @@ import uuid
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from deepface import DeepFace
+from rapidfuzz import fuzz
 
 def systemCheck():
     collections = MongoMobileApp.listCollections()
@@ -34,6 +36,65 @@ def systemCheck():
     if 'participants' not in collections:
         MongoMobileApp.createCollection('participants')
     return True
+
+def convert_objectid(record):
+    """Convert MongoDB ObjectId to string for JSON serialization."""
+    record = dict(record)  # ensure it's a dict
+    if '_id' in record:
+        record['_id'] = str(record['_id'])
+    return record
+
+def get_grouped_name_duplicates(records, threshold=90):
+    """
+    Returns grouped duplicate names instead of pairwise matches
+    """
+
+    total = len(records)
+
+    # Step 1: Build adjacency graph
+    graph = {i: set() for i in range(total)}
+
+    for i in range(total):
+        name1 = records[i].get("name", "").strip().lower()
+        if not name1:
+            continue
+
+        for j in range(i + 1, total):
+            name2 = records[j].get("name", "").strip().lower()
+            if not name2:
+                continue
+
+            score = fuzz.token_set_ratio(name1, name2)
+
+            if score >= threshold:
+                graph[i].add(j)
+                graph[j].add(i)
+
+    # Step 2: Find connected components
+    visited = set()
+    groups = []
+
+    for i in range(total):
+        if i in visited:
+            continue
+
+        stack = [i]
+        component = []
+
+        while stack:
+            node = stack.pop()
+            if node in visited:
+                continue
+
+            visited.add(node)
+            component.append(records[node])
+
+            stack.extend(graph[node] - visited)
+
+        if len(component) > 1:
+            groups.append(component)
+
+    return groups
 
 class formModel:
     def todb(params):
@@ -712,10 +773,12 @@ def getAllCandidates(request):
 
     filter = {}
     records = MongoMobileApp.find('participants', {})
+
     i = 0
     while i<len(records):
         records[i] = candidateModel.fromdb(records[i])
         i = i+1
+
     return Response(records)
 
 @api_view(['POST'])
@@ -901,13 +964,12 @@ def registerEvent(request):
             return Response("Invalid event date format")
         # Check if Participant Exists
         participant_filter = {
-            'normalizedName': {'$regex': f"^{normalize_name(body['name'])}$", '$options': 'i'},
-            'dateOfBirth': body['dateOfBirth']
+            'normalizedEmail': {'$regex': f"^{normalizedEmail(body['email'])}$", '$options': 'i'}
         }
         participant_list = MongoMobileApp.find('participants', participant_filter)
 
         # EXISTING PARTICIPANT
-        if participant_list:
+        if len(participant_list) > 0: 
             participant = participant_list[0]
             if event_id in participant.get('events', []):
                 return Response("Candidate already registered for this event.")
@@ -941,8 +1003,27 @@ def registerEvent(request):
         # NEW PARTICIPANT
         current_date = datetime.today().strftime('%y%m')
         all_records = MongoMobileApp.find('participants', {})
-        roll_number = current_date + str(len(all_records) + 1)
+        # for participant in all_records:
+        #     try:
+        #         # candidate's uploaded image
+        #         candidate_img_path = body['images']['profilePhoto'][0]['imageFile']['img']
+        #         # existing participant image stored in DB (assuming path or saved locally)
+        #         existing_img_path = participant['images']['profilePhoto'][0]['imageFile']['img']
 
+        #         # Run DeepFace verification
+        #         result = DeepFace.verify(candidate_img_path, existing_img_path, enforce_detection=False)
+
+        #         if result["verified"]:
+        #             print("Candidate already exists with same face!")
+        #             return Response("Registration failed. Your face identity already existing in our records. Please Contact admin !!!")
+        #         else:
+        #             print("Face identity check passed !!!")
+        #             pass
+
+        #     except Exception as e:
+        #         return Response("Face verification error")
+    
+        roll_number = current_date + str(len(all_records) + 1)
         body['rollNumber'] = roll_number
         body['events'] = [event_id]
         body['eventHistory'] = [{
@@ -950,7 +1031,7 @@ def registerEvent(request):
             'eventName': body['eventName'],
             'age': body['age']
         }]
-        body['normalizedName'] = normalize_name(body['name'])
+        body['normalizedEmail'] = normalizedEmail(body['email'])
 
         # Upload Profile Image to S3
         try:
@@ -1216,5 +1297,42 @@ def generate_unique_filename(original_filename):
     unique_id = uuid.uuid4().hex  # or use datetime.now().strftime("%Y%m%d%H%M%S")
     return f"{unique_id}{ext}"
 
-def normalize_name(name):
-    return ''.join(name.lower().split())
+def normalizedEmail(email):
+    return ''.join(email.lower().split())
+
+@api_view(['GET'])
+def getAllDuplicates(request):
+    systemCheck()
+    sts = MobileUser.validate(request.headers)
+    if 'isValidRequest' in sts and 'sigVerification' in sts and 'isExpired' in sts and 'isValidToken' in sts:
+        if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
+            pass
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    records = MongoMobileApp.find('participants', {})
+    all_candidates = list(records)
+    grouped_duplicates = get_grouped_name_duplicates(all_candidates, threshold=85)
+    # Convert _id in all groups
+    grouped_duplicates_serializable = [
+        [convert_objectid(r) for r in group] for group in grouped_duplicates
+    ]
+    # Count total duplicates (total records involved in duplicate groups)
+    total_duplicates = sum(len(group) for group in grouped_duplicates_serializable)
+    response_data = {
+        "total_groups": len(grouped_duplicates_serializable),
+        "total_duplicates": total_duplicates,
+        "groups": grouped_duplicates_serializable
+    }
+    return Response(response_data)
+
+
+
+
+
+
+
