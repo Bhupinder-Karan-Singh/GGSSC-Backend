@@ -583,7 +583,7 @@ class candidateModel:
         if 'eventHistory' in params:
             result['eventHistory'] = params['eventHistory']
         else:
-            result['condieventHistorytions'] = ""
+            result['eventHistory'] = ""
         return result
 
     def todb(params):
@@ -643,7 +643,7 @@ class candidateModel:
         else:
             result['isEdited'] = ""
         if 'age' in params:
-            result['age'] = calculate_age(params['dateOfBirth'])
+            result['age'] = params['age']
         else:
             result['age'] = ""
         if 'category' in params:
@@ -654,6 +654,38 @@ class candidateModel:
             result['comments'] = params['comments']
         else:
             result['comments'] = ""
+        if 'email2' in params:
+            result['email2'] = params['email2']
+        else:
+            result['email2'] = ""
+        if 'phoneNumber2' in params:
+            result['phoneNumber2'] = params['phoneNumber2']
+        else:
+            result['phoneNumber2'] = ""
+        if 'alreadyAttendedEvent' in params:
+            result['alreadyAttendedEvent'] = params['alreadyAttendedEvent']
+        else:
+            result['alreadyAttendedEvent'] = ""
+        if 'alreadyWinner' in params:
+            result['alreadyWinner'] = params['alreadyWinner']
+        else:
+            result['alreadyWinner'] = ""
+        if 'address' in params:
+            result['address'] = params['address']
+        else:
+            result['address'] = ""
+        if 'gender' in params:
+            result['gender'] = params['gender']
+        else:
+            result['gender'] = ""
+        if 'conditions' in params:
+            result['conditions'] = params['conditions']
+        else:
+            result['conditions'] = ""
+        if 'eventHistory' in params:
+            result['eventHistory'] = params['eventHistory']
+        else:
+            result['eventHistory'] = ""
         return result
 
 @api_view(['GET'])
@@ -984,7 +1016,8 @@ def registerEvent(request):
                         'eventHistory': {
                             'eventId': event_id,
                             'eventName': body['eventName'],
-                            'age': body['age']
+                            'age': body['age'],
+                            'eventRegistrationYear' : datetime.now().year
                         }
                     },
                     '$set': {'age': body['age']}
@@ -1029,7 +1062,8 @@ def registerEvent(request):
         body['eventHistory'] = [{
             'eventId': event_id,
             'eventName': body['eventName'],
-            'age': body['age']
+            'age': body['age'],
+            'eventRegistrationYear' : datetime.now().year
         }]
         body['normalizedEmail'] = normalizedEmail(body['email'])
 

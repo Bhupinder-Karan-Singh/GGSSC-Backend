@@ -99,3 +99,20 @@ urllib3                      2.4.0
 Werkzeug                     3.1.5
 wheel                        0.46.3
 wrapt                        1.14.2
+
+
+# Activate your venv
+C:\Users\bhupi\OneDrive\Documents\GitHub\GGSSC-Backend\Python310venv\Scripts\activate
+
+
+pip install deepface
+
+python
+>>> import deepface
+>>> deepface.__version__
+
+
+pip install numpy==1.23.5
+pip install opencv-python==4.6.0.66   # last OpenCV compatible with NumPy 1.x
+pip install tensorflow==2.12.0
+pip install keras==2.12.0
