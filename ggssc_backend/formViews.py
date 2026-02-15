@@ -31,10 +31,10 @@ def systemCheck():
     collections = MongoMobileApp.listCollections()
     if 'events' not in collections:
         MongoMobileApp.createCollection('events') 
-    if 'resources' not in collections:
-        MongoMobileApp.createCollection('resources')
     if 'participants' not in collections:
         MongoMobileApp.createCollection('participants')
+    if 'deletedParticipants' not in collections:
+        MongoMobileApp.createCollection('deletedParticipants')
     return True
 
 def convert_objectid(record):
@@ -1146,8 +1146,13 @@ def deleteCandidate(request):
     filter = {}
     if 'candidateId' in params:
         filter['_id'] = ObjectId(params['candidateId'])
+
+    # save deleted candidate record
+    candidateRecord = MongoMobileApp.find('participants', filter) 
+        
     result = MongoMobileApp.deleteMany('participants', filter)
     if result == 1:
+        MongoMobileApp.createOne('deletedParticipants', candidateRecord)
         records = MongoMobileApp.find('events', {})
         i = 0
         while i<len(records):
