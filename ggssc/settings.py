@@ -20,14 +20,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['www.bhupinderkaransingh.com','api.bhupinderkaransingh.com','localhost']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding','content-type', 'content-length', 'host', 'connection', 'user-agent', 'accept', 'origin', 'token')
 INTERNAL_IPS=["127.0.0.1"]
@@ -87,6 +87,14 @@ WSGI_APPLICATION = 'ggssc.wsgi.application'
 #     }
 # }
 
+MONGOMOBILEAPP = {
+    'host': os.environ["host"],
+    'port': os.environ["port"],
+    'dbname': os.environ["dbname"],
+    'authentication': os.environ["authentication"],
+    'username': os.environ["username"],
+    'password': os.environ["password"],
+}
 
 
 # Password validation
@@ -129,4 +137,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
+AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
+AWS_S3_CUSTOM_DOMAIN = f'{os.environ["AWS_STORAGE_BUCKET_NAME"]}.s3.{os.environ["AWS_S3_REGION_NAME"]}.amazonaws.com'
+
+GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
 

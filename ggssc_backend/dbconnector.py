@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import json
 import pymongo
+from pymongo import ReturnDocument
 
 from django.conf import settings
 class MongoMobileApp:
@@ -116,3 +117,13 @@ class MongoMobileApp:
     def listCollections():
         db = MongoMobileApp.getInstance()
         return db.list_collection_names()
+    def findOneAndUpdate(collection, query, newvalues):
+        db = MongoMobileApp.getInstance()
+        dbcollection = db[collection]
+        result = dbcollection.find_one_and_update(
+            query,
+            newvalues,
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+        return result

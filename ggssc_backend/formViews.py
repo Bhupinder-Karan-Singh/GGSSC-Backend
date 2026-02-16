@@ -24,7 +24,7 @@ import uuid
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from deepface import DeepFace
+# from deepface import DeepFace
 from rapidfuzz import fuzz
 
 def systemCheck():
@@ -35,6 +35,8 @@ def systemCheck():
         MongoMobileApp.createCollection('participants')
     if 'deletedParticipants' not in collections:
         MongoMobileApp.createCollection('deletedParticipants')
+    if 'generateRollNumber' not in collections:
+        MongoMobileApp.createCollection('generateRollNumber')
     return True
 
 def convert_objectid(record):
@@ -712,13 +714,14 @@ def getAllEvents(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    filter = {}
     records = MongoMobileApp.find('events', {})
     i = 0
     while i<len(records):
@@ -734,11 +737,13 @@ def getEvent(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     params = request.query_params
     filter = {}
@@ -759,11 +764,13 @@ def getCandidatesList(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     params = request.query_params
     filter = {}
@@ -797,13 +804,14 @@ def getAllCandidates(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    filter = {}
     records = MongoMobileApp.find('participants', {})
 
     i = 0
@@ -821,11 +829,13 @@ def createEvent(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
@@ -853,11 +863,13 @@ def saveEvent(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     body = json.loads(request.body.decode('utf-8'))
     body = formModel.todb(body)
@@ -895,11 +907,13 @@ def saveCandidate(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     body = json.loads(request.body.decode('utf-8'))
     body = candidateModel.todb(body)
@@ -1056,7 +1070,8 @@ def registerEvent(request):
         #     except Exception as e:
         #         return Response("Face verification error")
     
-        roll_number = current_date + str(len(all_records) + 1)
+        # roll_number = current_date + str(len(all_records) + 1)
+        roll_number = get_next_roll_number()
         body['rollNumber'] = roll_number
         body['events'] = [event_id]
         body['eventHistory'] = [{
@@ -1117,11 +1132,13 @@ def deleteEvent(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     params = request.query_params
     filter = {}
     if 'payloadId' in params:
@@ -1137,11 +1154,13 @@ def deleteCandidate(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     params = request.query_params
     filter = {}
     if 'candidateId' in params:
@@ -1176,11 +1195,13 @@ def removeCandidate(request):
         if sts['isValidRequest'] == True and sts['sigVerification'] == True and sts['isExpired'] == False and sts['isValidToken'] == True:
             pass
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_403_FORBIDDEN)
     elif 'isValidRequest' in sts and sts['isValidRequest'] == False:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif 'isExpired' in sts and sts['isExpired'] == True:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     params = request.query_params
     filter = {}
     if 'eventId' in params:
@@ -1222,7 +1243,7 @@ def json_converter(o):
 
 def sendOtpEmail(random_number, recipient_email):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = ""  # not your Gmail login password
+    app_password = settings.GMAIL_APP_PASSWORD  # not your Gmail login password
 
     subject = "Evently verification code"
     body = f"Registration Verification code is {random_number}"
@@ -1246,7 +1267,7 @@ def sendOtpEmail(random_number, recipient_email):
 
 def sendEmail(body):
     sender_email = "web.ggssc.canada@gmail.com"
-    app_password = ""  # Replace with your actual App Password
+    app_password = settings.GMAIL_APP_PASSWORD  # Replace with your actual App Password
     recipient_email = body['email']
     subject = "Evently - Registration successful"
 
@@ -1369,6 +1390,17 @@ def getAllDuplicates(request):
     }
     return Response(response_data)
 
+def get_next_roll_number():
+    counter = MongoMobileApp.findOneAndUpdate(
+        'generateRollNumber',
+        {"_id": "participant_roll"},
+        {"$inc": {"seq": 1}}
+    )
+    sequence_number = counter["seq"]
+    now = datetime.now()
+    year_month = now.strftime("%y%m")  # Example: 2602
+    roll_number = f"{year_month}{sequence_number}"
+    return roll_number
 
 
 
